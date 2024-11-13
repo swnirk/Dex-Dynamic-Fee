@@ -10,7 +10,8 @@ from enum import Enum
 import enum
 import logging
 from copy import deepcopy
-from pool.abstract_pool import PoolLiquidityState, Pool
+from pool.abstract_pool import Pool
+from prices_snapshot import PricesSnapshot
 
 
 class UserType(Enum):
@@ -26,10 +27,9 @@ class ParticipantState:
         self,
         delta_x: float,
         delta_y: float,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ):
-        deal_profit = capital_function(delta_x, delta_y, fair_price_A, fair_price_B)
+        deal_profit = capital_function(delta_x, delta_y, prices)
         self.total_profit += deal_profit
 
 
@@ -99,21 +99,13 @@ class Simulation:
             fair_price_A = row["price_A"]
             fair_price_B = row["price_B"]
 
+            prices_snapshot = PricesSnapshot(fair_price_A, fair_price_B)
+
             if self._trade(p_UU):
-                self.process_deal(
-                    UserType.UNINFORMED,
-                    uninformed_user,
-                    fair_price_A,
-                    fair_price_B,
-                )
+                self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
 
             if self._trade(p_IU):
-                self.process_deal(
-                    UserType.INFORMED,
-                    informed_user,
-                    fair_price_A,
-                    fair_price_B,
-                )
+                self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
 
             result.snapshots.append(self.current_state)
             result.timestamps.append(row["time"])
@@ -124,21 +116,15 @@ class Simulation:
         self,
         user_type: UserType,
         user: User,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ):
         """
         Process the deal
         """
         logging.info(
-            f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {fair_price_A}, {fair_price_B}"
+            f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {prices}"
         )
-        user_action = user.get_user_action(
-            self.pool,
-            self.network_fee,
-            fair_price_A,
-            fair_price_B,
-        )
+        user_action = user.get_user_action(self.pool, self.network_fee, prices)
         logging.info(f"User action: {user_action}")
         if user_action is None:
             return
@@ -147,15 +133,17 @@ class Simulation:
         self.pool.process_trade(user_action.delta_x, user_action.delta_y)
 
         self.current_state.user_states[user_type].process_trade(
-            user_action.delta_x, user_action.delta_y, fair_price_A, fair_price_B
+            user_action.delta_x,
+            user_action.delta_y,
+            prices,
         )
 
         self.current_state.profits_LP.process_trade(
-            -user_action.delta_x, -user_action.delta_y, fair_price_A, fair_price_B
+            -user_action.delta_x, -user_action.delta_y, prices
         )
 
         logging.info(
-            f"Pool state after the deal: {self.pool.liquidity_state}, current fair prices: {fair_price_A}, {fair_price_B}"
+            f"Pool state after the deal: {self.pool.liquidity_state}, current fair prices: {prices}"
         )
 
     def _trade(self, probability: float):
