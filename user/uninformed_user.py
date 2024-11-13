@@ -10,6 +10,7 @@ from common import (
 )
 from typing import Optional
 from pool.abstract_pool import Pool
+from prices_snapshot import PricesSnapshot
 
 
 class UninformedUser(User):
@@ -17,10 +18,9 @@ class UninformedUser(User):
         self,
         pool: Pool,
         network_fee: float,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ) -> Optional[UserAction]:
-        if fair_price_A > fair_price_B:
+        if prices.price_a > prices.price_b:
             p_token_1 = 0.6
         else:
             p_token_1 = 0.4
@@ -33,14 +33,12 @@ class UninformedUser(User):
         if token_choice == "token1":
             action = self._get_a_to_b_swap(
                 pool,
-                fair_price_A,
-                fair_price_B,
+                prices,
             )
         else:
             action = self._get_a_to_b_swap(
                 pool.inverse_pool(),
-                fair_price_B,
-                fair_price_A,
+                prices.inverse(),
             )
             if action is not None:
                 action = UserAction(action.delta_y, action.delta_x, action.fee)
@@ -54,8 +52,7 @@ class UninformedUser(User):
     def _get_a_to_b_swap(
         self,
         pool: Pool,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ) -> Optional[UserAction]:
         mu = 0.0005
         sigma = 0.0001
@@ -71,19 +68,16 @@ class UninformedUser(User):
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
             pool.get_a_to_b_exchange_fee_rate(),
-            fair_price_A,
-            fair_price_B,
+            prices,
             delta_x,
         )
         action_no_fee = construct_user_swap_a_to_b(
-            pool.liquidity_state, 0, fair_price_A, fair_price_B, delta_x
+            pool.liquidity_state, 0, prices, delta_x
         )
 
-        delta_P = capital_function(
-            action.delta_x, action.delta_y, fair_price_A, fair_price_B
-        )
+        delta_P = capital_function(action.delta_x, action.delta_y, prices)
         delta_P_no_fee = capital_function(
-            action_no_fee.delta_x, action_no_fee.delta_y, fair_price_A, fair_price_B
+            action_no_fee.delta_x, action_no_fee.delta_y, prices
         )
 
         r = delta_P / delta_P_no_fee

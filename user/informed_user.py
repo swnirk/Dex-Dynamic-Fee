@@ -8,6 +8,7 @@ from user.abstract_user import (
 from typing import Optional
 import logging
 from pool.abstract_pool import Pool
+from prices_snapshot import PricesSnapshot
 
 
 class InformedUser(User):
@@ -15,10 +16,9 @@ class InformedUser(User):
         self,
         pool: Pool,
         network_fee: float,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ) -> Optional[UserAction]:
-        q = fair_price_A / fair_price_B
+        q = prices.price_a / prices.price_b
 
         action: Optional[UserAction] = None
 
@@ -27,16 +27,14 @@ class InformedUser(User):
             action = self._get_optimal_a_to_b_swap(
                 pool,
                 network_fee,
-                fair_price_A,
-                fair_price_B,
+                prices,
             )
         elif pool.get_a_to_b_exchange_price() < q:
             logging.debug("Users swaps B -> A")
             action = self._get_optimal_a_to_b_swap(
                 pool.inverse_pool(),
                 network_fee,
-                fair_price_B,
-                fair_price_A,
+                prices.inverse(),
             )
             action = UserAction(action.delta_y, action.delta_x, action.fee)
         else:
@@ -52,14 +50,13 @@ class InformedUser(User):
         self,
         pool: Pool,
         network_fee: float,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ) -> UserAction:
         x = pool.liquidity_state.quantity_a
         y = pool.liquidity_state.quantity_b
         alpha = pool.get_a_to_b_exchange_fee_rate()
 
-        q = fair_price_A / fair_price_B
+        q = prices.price_a / prices.price_b
         beta = 1 - alpha
 
         assert pool.get_a_to_b_exchange_price() > q
@@ -75,8 +72,7 @@ class InformedUser(User):
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
             pool.get_a_to_b_exchange_fee_rate(),
-            fair_price_A,
-            fair_price_B,
+            prices,
             optimal_delta_x,
         )
 

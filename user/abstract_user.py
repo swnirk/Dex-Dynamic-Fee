@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from common import get_amm_exchange_value_a_to_b, capital_function
 from typing import Optional
 from pool.abstract_pool import PoolLiquidityState, Pool
+from prices_snapshot import PricesSnapshot
 
 
 @dataclass
@@ -21,15 +22,13 @@ class User(ABC):
         self,
         pool: Pool,
         network_fee: float,
-        fair_price_A: float,
-        fair_price_B: float,
+        prices: PricesSnapshot,
     ) -> Optional[UserAction]:
         """
         Args:
         pool: Pool, the pool
         network_fee: float, the network fee
-        fair_price_A: float, the fair price of asset A
-        fair_price_B: float, the fair price of asset B
+        prices: PricesSnapshot, the prices of tokens A and B
 
         Returns:
         """
@@ -39,8 +38,7 @@ class User(ABC):
 def construct_user_swap_a_to_b(
     pool_state: PoolLiquidityState,
     fee_rate: float,
-    fair_price_A: float,
-    fair_price_B: float,
+    prices: PricesSnapshot,
     amount_to_exchange_A: float,
 ) -> UserAction:
     """
@@ -60,8 +58,7 @@ def construct_user_swap_a_to_b(
     fee = capital_function(
         amount_to_exchange_A * fee_rate,
         0,
-        fair_price_A,
-        fair_price_B,
+        prices,
     )
     return UserAction(-amount_to_exchange_A, -pool_change_b, fee)
 
@@ -69,8 +66,7 @@ def construct_user_swap_a_to_b(
 def construct_user_swap_b_to_a(
     pool_state: PoolLiquidityState,
     fee_rate: float,
-    fair_price_A: float,
-    fair_price_B: float,
+    prices: PricesSnapshot,
     amount_to_exchange_B: float,
 ) -> UserAction:
     """
@@ -79,8 +75,7 @@ def construct_user_swap_b_to_a(
     action = construct_user_swap_a_to_b(
         pool_state.inverse(),
         fee_rate,
-        fair_price_B,
-        fair_price_A,
+        prices,
         amount_to_exchange_B,
     )
     return UserAction(action.delta_y, action.delta_x, action.fee)

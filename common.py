@@ -1,18 +1,20 @@
+from prices_snapshot import PricesSnapshot
+
+
 def capital_function(
-    position_A: float, position_B: float, price_A: float, price_B: float
+    position_A: float, position_B: float, prices: PricesSnapshot
 ) -> float:
     """
     Calculate the total value of the portfolio
     Args:
     position_A: float, the number of shares of asset A
     position_B: float, the number of shares of asset B
-    price_A: float, the price of asset A
-    price_B: float, the price of asset B
+    prices: PricesSnapshot, the prices of tokens A and B
 
     Returns:
     float: the total value of the portfolio
     """
-    return position_A * price_A + position_B * price_B
+    return position_A * prices.price_a + position_B * prices.price_b
 
 
 def get_amm_exchange_value_a_to_b(
