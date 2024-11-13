@@ -70,7 +70,6 @@ class Simulation:
 
     def simulate(
         self,
-        p_IU: float,
         p_UU: float,
         informed_user: InformedUser,
         uninformed_user: UninformedUser,
@@ -79,10 +78,9 @@ class Simulation:
         """
         Simulate the trading process.
 
-        Probabilities of deals on each step is simulated with fixed probabilities p_IU and p_UU
+        Probabilities of UU deals on each step is simulated with probability p_UU
 
         Args:
-        p_IU: float, the probability of the informed user to make a deal
         p_UU: float, the probability of the uninformed user to make a deal
         informed_user: InformedUser, the informed user
         uninformed_user: UninformedUser, the uninformed user
@@ -104,8 +102,7 @@ class Simulation:
             if self._trade(p_UU):
                 self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
 
-            if self._trade(p_IU):
-                self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
+            self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
 
             result.snapshots.append(self.current_state)
             result.timestamps.append(row["time"])
