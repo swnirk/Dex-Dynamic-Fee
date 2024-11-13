@@ -12,6 +12,7 @@ import logging
 from copy import deepcopy
 from pool.abstract_pool import Pool
 from prices_snapshot import PricesSnapshot
+import dataclasses
 
 
 class UserType(Enum):
@@ -20,8 +21,27 @@ class UserType(Enum):
 
 
 @dataclasses.dataclass
+class Position:
+    position_a: float
+    position_b: float
+
+    def process_trade(self, delta_x: float, delta_y: float):
+        self.position_a += delta_x
+        self.position_b += delta_y
+
+
+@dataclasses.dataclass
 class ParticipantState:
-    total_profit: float = 0
+    total_markout: float = 0
+    position: Position = dataclasses.field(
+        default_factory=lambda: Position(position_a=0, position_b=0)
+    )
+    valuation: float = 0
+
+    def update_valuation(self, prices: PricesSnapshot):
+        self.valuation = capital_function(
+            self.position.position_a, self.position.position_b, prices
+        )
 
     def process_trade(
         self,
@@ -29,14 +49,16 @@ class ParticipantState:
         delta_y: float,
         prices: PricesSnapshot,
     ):
-        deal_profit = capital_function(delta_x, delta_y, prices)
-        self.total_profit += deal_profit
+        deal_markout = capital_function(delta_x, delta_y, prices)
+        self.total_markout += deal_markout
+        self.position.process_trade(delta_x, delta_y)
 
 
 @dataclasses.dataclass
 class SimulationState:
     user_states: dict[UserType, ParticipantState]
-    profits_LP: ParticipantState
+    lp_state: ParticipantState
+    lp_with_just_hold_strategy: ParticipantState
 
 
 @dataclasses.dataclass
@@ -59,14 +81,6 @@ class Simulation:
 
         self.pool = pool
         self.network_fee = network_fee
-
-        self.current_state = SimulationState(
-            user_states={
-                UserType.INFORMED: ParticipantState(),
-                UserType.UNINFORMED: ParticipantState(),
-            },
-            profits_LP=ParticipantState(),
-        )
 
     def simulate(
         self,
@@ -91,18 +105,47 @@ class Simulation:
         """
         result = SimulationResult()
 
+        initial_prices_snapshot = self._get_prices_snapshot(prices.iloc[0])
+
+        # TODO: we suppose that we have only one LP -- this is very unrealistic assumption
+        initial_lp_state = ParticipantState(
+            total_markout=0,
+            position=Position(
+                position_a=self.pool.liquidity_state.quantity_a,
+                position_b=self.pool.liquidity_state.quantity_b,
+            ),
+        )
+        self.current_state = SimulationState(
+            user_states={
+                UserType.INFORMED: ParticipantState(),
+                UserType.UNINFORMED: ParticipantState(),
+            },
+            lp_state=initial_lp_state,
+            lp_with_just_hold_strategy=deepcopy(initial_lp_state),
+        )
+
+        self.current_state.lp_state.update_valuation(initial_prices_snapshot)
+
         for _, row in prices.iterrows():
             self.current_state = deepcopy(self.current_state)
 
-            fair_price_A = row["price_A"]
-            fair_price_B = row["price_B"]
-
-            prices_snapshot = PricesSnapshot(fair_price_A, fair_price_B)
+            prices_snapshot = self._get_prices_snapshot(row)
 
             if self._trade(p_UU):
                 self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
 
             self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
+
+            self.current_state.lp_state.update_valuation(prices_snapshot)
+            self.current_state.lp_with_just_hold_strategy.update_valuation(
+                prices_snapshot
+            )
+            self.current_state.user_states[UserType.INFORMED].update_valuation(
+                prices_snapshot
+            )
+            self.current_state.user_states[UserType.UNINFORMED].update_valuation(
+                prices_snapshot
+            )
 
             result.snapshots.append(self.current_state)
             result.timestamps.append(row["time"])
@@ -135,7 +178,7 @@ class Simulation:
             prices,
         )
 
-        self.current_state.profits_LP.process_trade(
+        self.current_state.lp_state.process_trade(
             -user_action.delta_x, -user_action.delta_y, prices
         )
 
@@ -145,3 +188,8 @@ class Simulation:
 
     def _trade(self, probability: float):
         return np.random.rand() < probability
+
+    def _get_prices_snapshot(self, row: pd.Series):
+        fair_price_A = row["price_A"]
+        fair_price_B = row["price_B"]
+        return PricesSnapshot(fair_price_A, fair_price_B)
