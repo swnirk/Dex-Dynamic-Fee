@@ -20,13 +20,7 @@ class UninformedUser(User):
         network_fee: float,
         prices: PricesSnapshot,
     ) -> Optional[UserAction]:
-        if prices.price_a > prices.price_b:
-            p_token_1 = 0.6
-        else:
-            p_token_1 = 0.4
-        token_choice = np.random.choice(
-            ["token1", "token2"], size=1, p=[p_token_1, 1 - p_token_1]
-        )
+        token_choice = np.random.choice(["token1", "token2"], size=1, p=[0.5, 0.5])
 
         action: Optional[UserAction] = None
 
