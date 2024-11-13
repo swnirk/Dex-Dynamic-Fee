@@ -9,14 +9,13 @@ from common import (
     capital_function,
 )
 from typing import Optional
+from pool.abstract_pool import Pool
 
 
 class UninformedUser(User):
     def get_user_action(
         self,
-        token1_quantity: float,
-        token2_quantity: float,
-        alpha: float,
+        pool: Pool,
         network_fee: float,
         fair_price_A: float,
         fair_price_B: float,
@@ -33,17 +32,13 @@ class UninformedUser(User):
 
         if token_choice == "token1":
             action = self._get_a_to_b_swap(
-                token1_quantity,
-                token2_quantity,
-                alpha,
+                pool,
                 fair_price_A,
                 fair_price_B,
             )
         else:
             action = self._get_a_to_b_swap(
-                token2_quantity,
-                token1_quantity,
-                alpha,
+                pool.inverse_pool(),
                 fair_price_B,
                 fair_price_A,
             )
@@ -53,14 +48,12 @@ class UninformedUser(User):
         if action is None:
             return None
 
-        validate_user_action(token1_quantity, token2_quantity, action)
+        validate_user_action(pool.liquidity_state, action)
         return action
 
     def _get_a_to_b_swap(
         self,
-        token1_quantity: float,
-        token2_quantity: float,
-        alpha: float,
+        pool: Pool,
         fair_price_A: float,
         fair_price_B: float,
     ) -> Optional[UserAction]:
@@ -69,17 +62,21 @@ class UninformedUser(User):
         share = np.random.normal(mu, sigma)
 
         # "Pool" side;
-        delta_x = share * token1_quantity
+        delta_x = share * pool.liquidity_state.quantity_a
 
         if share == 0:
             return None
 
         # User side
         action = construct_user_swap_a_to_b(
-            token1_quantity, token2_quantity, alpha, fair_price_A, fair_price_B, delta_x
+            pool.liquidity_state,
+            pool.get_a_to_b_exchange_fee_rate(),
+            fair_price_A,
+            fair_price_B,
+            delta_x,
         )
         action_no_fee = construct_user_swap_a_to_b(
-            token1_quantity, token2_quantity, 0, fair_price_A, fair_price_B, delta_x
+            pool.liquidity_state, 0, fair_price_A, fair_price_B, delta_x
         )
 
         delta_P = capital_function(

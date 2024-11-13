@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from common import get_amm_exchange_value_a_to_b, capital_function
 from typing import Optional
+from pool.abstract_pool import PoolLiquidityState, Pool
 
 
 @dataclass
@@ -18,18 +19,14 @@ class User(ABC):
     @abstractmethod
     def get_user_action(
         self,
-        token1_quantity: float,
-        token2_quantity: float,
-        alpha: float,
+        pool: Pool,
         network_fee: float,
         fair_price_A: float,
         fair_price_B: float,
     ) -> Optional[UserAction]:
         """
         Args:
-        token1_quantity: float, the number of shares of asset A in the pool
-        token2_quantity: float, the number of shares of asset B in the pool
-        alpha: float, DEX fee rate
+        pool: Pool, the pool
         network_fee: float, the network fee
         fair_price_A: float, the fair price of asset A
         fair_price_B: float, the fair price of asset B
@@ -40,9 +37,8 @@ class User(ABC):
 
 
 def construct_user_swap_a_to_b(
-    token1_quantity: float,
-    token2_quantity: float,
-    alpha: float,
+    pool_state: PoolLiquidityState,
+    fee_rate: float,
     fair_price_A: float,
     fair_price_B: float,
     amount_to_exchange_A: float,
@@ -56,19 +52,23 @@ def construct_user_swap_a_to_b(
     assert amount_to_exchange_A >= 0
 
     pool_change_b = get_amm_exchange_value_a_to_b(
-        token1_quantity, token2_quantity, amount_to_exchange_A
+        pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A
     )
 
     assert pool_change_b <= 0
 
-    fee = capital_function(amount_to_exchange_A * alpha, 0, fair_price_A, fair_price_B)
+    fee = capital_function(
+        amount_to_exchange_A * fee_rate,
+        0,
+        fair_price_A,
+        fair_price_B,
+    )
     return UserAction(-amount_to_exchange_A, -pool_change_b, fee)
 
 
 def construct_user_swap_b_to_a(
-    token1_quantity: float,
-    token2_quantity: float,
-    alpha: float,
+    pool_state: PoolLiquidityState,
+    fee_rate: float,
     fair_price_A: float,
     fair_price_B: float,
     amount_to_exchange_B: float,
@@ -77,9 +77,8 @@ def construct_user_swap_b_to_a(
     See construct_user_swap_a_to_b
     """
     action = construct_user_swap_a_to_b(
-        token2_quantity,
-        token1_quantity,
-        alpha,
+        pool_state.inverse(),
+        fee_rate,
         fair_price_B,
         fair_price_A,
         amount_to_exchange_B,
@@ -88,10 +87,9 @@ def construct_user_swap_b_to_a(
 
 
 def validate_user_action(
-    token1_quantity: float,
-    token2_quantity: float,
+    pool_state: PoolLiquidityState,
     action: UserAction,
 ) -> None:
-    assert token1_quantity - action.delta_x >= 0
-    assert token2_quantity - action.delta_y >= 0
+    assert pool_state.quantity_a - action.delta_x >= 0
+    assert pool_state.quantity_b - action.delta_y >= 0
     assert action.delta_x * action.delta_y <= 0

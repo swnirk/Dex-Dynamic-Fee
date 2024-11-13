@@ -29,14 +29,3 @@ def get_amm_exchange_value_a_to_b(
     float: the value of the asset B that the AMM will return
     """
     return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
-
-
-def get_dex_a_to_b_price(quantity_A: float, quantity_B: float):
-    """
-    Return the price of asset A in terms of asset B
-
-    Args:
-    quantity_A: float, the amount of asset A in the pool
-    quantity_B: float, the amount of asset B in the pool
-    """
-    return quantity_B / quantity_A

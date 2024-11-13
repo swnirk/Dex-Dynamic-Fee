@@ -10,6 +10,7 @@ from enum import Enum
 import enum
 import logging
 from copy import deepcopy
+from pool.abstract_pool import PoolLiquidityState, Pool
 
 
 class UserType(Enum):
@@ -47,23 +48,17 @@ class SimulationResult:
 class Simulation:
     def __init__(
         self,
-        initial_quantity_A: float,
-        initial_quantity_B: float,
+        pool: Pool,
         network_fee: float,
-        alpha: float,
     ):
         """
         Args:
-        initial_quantity_A: float, the initial number of shares of asset A in the pool
-        initial_quantity_B: float, the initial number of shares of asset B in the pool
+        pool: Pool, the pool
         network_fee: float, the network fee
-        alpha: float, the fee rate
         """
 
-        self.quantity_A = initial_quantity_A
-        self.quantity_B = initial_quantity_B
+        self.pool = pool
         self.network_fee = network_fee
-        self.alpha = alpha
 
         self.current_state = SimulationState(
             user_states={
@@ -108,8 +103,6 @@ class Simulation:
                 self.process_deal(
                     UserType.UNINFORMED,
                     uninformed_user,
-                    self.quantity_A,
-                    self.quantity_B,
                     fair_price_A,
                     fair_price_B,
                 )
@@ -118,8 +111,6 @@ class Simulation:
                 self.process_deal(
                     UserType.INFORMED,
                     informed_user,
-                    self.quantity_A,
-                    self.quantity_B,
                     fair_price_A,
                     fair_price_B,
                 )
@@ -133,8 +124,6 @@ class Simulation:
         self,
         user_type: UserType,
         user: User,
-        token1_quantity: float,
-        token2_quantity: float,
         fair_price_A: float,
         fair_price_B: float,
     ):
@@ -142,12 +131,10 @@ class Simulation:
         Process the deal
         """
         logging.info(
-            f"Processing deal for {user_type}, current pool state: {self.quantity_A}, {self.quantity_B}, current fair prices: {fair_price_A}, {fair_price_B}"
+            f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {fair_price_A}, {fair_price_B}"
         )
         user_action = user.get_user_action(
-            token1_quantity,
-            token2_quantity,
-            self.alpha,
+            self.pool,
             self.network_fee,
             fair_price_A,
             fair_price_B,
@@ -157,8 +144,7 @@ class Simulation:
             return
 
         # Signs of delta_x and delta_y are relative to the user
-        self.quantity_A -= user_action.delta_x
-        self.quantity_B -= user_action.delta_y
+        self.pool.process_trade(user_action.delta_x, user_action.delta_y)
 
         self.current_state.user_states[user_type].process_trade(
             user_action.delta_x, user_action.delta_y, fair_price_A, fair_price_B
@@ -169,7 +155,7 @@ class Simulation:
         )
 
         logging.info(
-            f"Pool state after the deal: {self.quantity_A}, {self.quantity_B}, current fair prices: {fair_price_A}, {fair_price_B}"
+            f"Pool state after the deal: {self.pool.liquidity_state}, current fair prices: {fair_price_A}, {fair_price_B}"
         )
 
     def _trade(self, probability: float):
