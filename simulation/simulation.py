@@ -81,6 +81,8 @@ class Simulation:
 
         self.pool = pool
         self.network_fee = network_fee
+        self.num_A_to_B_deals = 0
+        self.num_B_to_A_deals = 0
 
     def simulate(
         self,
@@ -88,6 +90,7 @@ class Simulation:
         informed_user: InformedUser,
         uninformed_user: UninformedUser,
         prices: pd.DataFrame,
+        isDynamicFee: bool,
     ) -> SimulationResult:
         """
         Simulate the trading process.
@@ -132,9 +135,9 @@ class Simulation:
             prices_snapshot = self._get_prices_snapshot(row)
 
             if self._trade(p_UU):
-                self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
+                self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot, isDynamicFee)
 
-            self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
+            self.process_deal(UserType.INFORMED, informed_user, prices_snapshot, isDynamicFee)
 
             self.current_state.lp_state.update_valuation(prices_snapshot)
             self.current_state.lp_with_just_hold_strategy.update_valuation(
@@ -157,6 +160,7 @@ class Simulation:
         user_type: UserType,
         user: User,
         prices: PricesSnapshot,
+        isDynamicFee: bool = False,
     ):
         """
         Process the deal
@@ -164,13 +168,43 @@ class Simulation:
         logging.info(
             f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {prices}"
         )
-        user_action = user.get_user_action(self.pool, self.network_fee, prices)
+        user_action = user.get_user_action(self.pool, self.network_fee, prices, isDynamicFee)
         logging.info(f"User action: {user_action}")
         if user_action is None:
             return
 
         # Signs of delta_x and delta_y are relative to the user
-        self.pool.process_trade(user_action.delta_x, user_action.delta_y)
+        if isDynamicFee:
+            if user_action.delta_x < 0:
+                fee = self.pool.get_a_to_b_exchange_fee_rate()
+                self.pool.process_trade(user_action.delta_x*(1-fee), user_action.delta_y)
+                
+            elif user_action.delta_y < 0:
+                fee = self.pool.get_b_to_a_exchange_fee_rate()
+                self.pool.process_trade(user_action.delta_x, user_action.delta_y*(1-fee))
+
+            # change the fee
+            if user_action.delta_x < 0: 
+                self.num_A_to_B_deals += 1
+            elif user_action.delta_y < 0:
+                self.num_B_to_A_deals += 1
+
+            delta = self.num_A_to_B_deals - self.num_B_to_A_deals
+            if abs(delta) > 5:
+                if (delta > 0) & (self.pool.alpha < 0.03):
+                    self.pool.alpha += 0.001
+                elif (delta < 0) & (self.pool.gamma < 0.03):
+                    self.pool.gamma += 0.001
+            
+            print(f"num_A_to_B_deals: {self.num_A_to_B_deals}, num_B_to_A_deals: {self.num_B_to_A_deals}, alpha: {self.pool.alpha}, gamma: {self.pool.gamma}")
+            
+        else:
+            fee = self.pool.get_a_to_b_exchange_fee_rate()
+            if user_action.delta_x < 0:
+                self.pool.process_trade(user_action.delta_x*(1-fee), user_action.delta_y)
+                
+            elif user_action.delta_y < 0:
+                self.pool.process_trade(user_action.delta_x, user_action.delta_y*(1-fee))
 
         self.current_state.user_states[user_type].process_trade(
             user_action.delta_x,

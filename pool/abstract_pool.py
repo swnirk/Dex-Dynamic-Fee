@@ -29,6 +29,10 @@ class Pool(ABC):
         pass
 
     @abstractmethod
+    def get_b_to_a_exchange_fee_rate(self) -> float:
+        pass
+
+    @abstractmethod
     def process_trade(self, delta_a: float, delta_b: float):
         pass
 

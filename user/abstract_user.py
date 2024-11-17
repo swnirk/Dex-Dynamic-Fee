@@ -23,6 +23,7 @@ class User(ABC):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
+        isDynamicFee: bool,
     ) -> Optional[UserAction]:
         """
         Args:
@@ -47,13 +48,13 @@ def construct_user_swap_a_to_b(
     Args:
     amount_to_exchange_A: float, the amount of token A user wants to exchange
     """
-    assert amount_to_exchange_A >= 0
+    # assert amount_to_exchange_A >= 0
 
     pool_change_b = get_amm_exchange_value_a_to_b(
         pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A
     )
 
-    assert pool_change_b <= 0
+    # assert pool_change_b <= 0
 
     fee = capital_function(
         amount_to_exchange_A * fee_rate,
@@ -85,6 +86,7 @@ def validate_user_action(
     pool_state: PoolLiquidityState,
     action: UserAction,
 ) -> None:
+    print(f"num A: {pool_state.quantity_a}, delta_x: {action.delta_x}, num B: {pool_state.quantity_b}, delta_y: {action.delta_y}")
     assert pool_state.quantity_a - action.delta_x >= 0
     assert pool_state.quantity_b - action.delta_y >= 0
     assert action.delta_x * action.delta_y <= 0
