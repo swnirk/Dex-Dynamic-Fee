@@ -59,9 +59,11 @@ class UninformedUser(User):
             return None
 
         # User side
+        fee = pool.get_a_to_b_exchange_fee_rate()
+
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            pool.get_a_to_b_exchange_fee_rate(),
+            fee,
             prices,
             delta_x,
         )

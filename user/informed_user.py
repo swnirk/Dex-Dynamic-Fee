@@ -54,10 +54,10 @@ class InformedUser(User):
     ) -> UserAction:
         x = pool.liquidity_state.quantity_a
         y = pool.liquidity_state.quantity_b
-        alpha = pool.get_a_to_b_exchange_fee_rate()
-
         q = prices.price_a / prices.price_b
-        beta = 1 - alpha
+
+        fee = pool.get_a_to_b_exchange_fee_rate()
+        beta = 1 - fee
 
         assert pool.get_a_to_b_exchange_price() > q
 
@@ -71,7 +71,7 @@ class InformedUser(User):
 
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            pool.get_a_to_b_exchange_fee_rate(),
+            fee,
             prices,
             optimal_delta_x,
         )

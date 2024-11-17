@@ -81,6 +81,8 @@ class Simulation:
 
         self.pool = pool
         self.network_fee = network_fee
+        self.num_A_to_B_deals = 0
+        self.num_B_to_A_deals = 0
 
     def simulate(
         self,
@@ -165,12 +167,21 @@ class Simulation:
             f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {prices}"
         )
         user_action = user.get_user_action(self.pool, self.network_fee, prices)
+
         logging.info(f"User action: {user_action}")
         if user_action is None:
             return
 
-        # Signs of delta_x and delta_y are relative to the user
-        self.pool.process_trade(user_action.delta_x, user_action.delta_y)
+        if user_action.delta_x < 0:
+            fee = self.pool.get_a_to_b_exchange_fee_rate()
+            self.pool.process_trade(
+                user_action.delta_x * (1 - fee), user_action.delta_y
+            )
+        elif user_action.delta_y < 0:
+            fee = self.pool.get_b_to_a_exchange_fee_rate()
+            self.pool.process_trade(
+                user_action.delta_x, user_action.delta_y * (1 - fee)
+            )
 
         self.current_state.user_states[user_type].process_trade(
             user_action.delta_x,

@@ -14,5 +14,8 @@ class SimplePool(Pool):
     def get_a_to_b_exchange_fee_rate(self) -> float:
         return self.alpha
 
+    def get_b_to_a_exchange_fee_rate(self) -> float:
+        return self.alpha
+
     def process_trade(self, delta_a: float, delta_b: float):
         self.liquidity_state.process_trade(delta_a, delta_b)

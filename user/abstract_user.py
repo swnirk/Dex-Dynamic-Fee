@@ -4,6 +4,7 @@ from common import get_amm_exchange_value_a_to_b, capital_function
 from typing import Optional
 from pool.abstract_pool import PoolLiquidityState, Pool
 from prices_snapshot import PricesSnapshot
+import logging
 
 
 @dataclass
@@ -23,6 +24,7 @@ class User(ABC):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
+        # isDynamicFee: bool,
     ) -> Optional[UserAction]:
         """
         Args:
@@ -85,6 +87,9 @@ def validate_user_action(
     pool_state: PoolLiquidityState,
     action: UserAction,
 ) -> None:
+    logging.debug(
+        f"Validating user action num A: {pool_state.quantity_a}, delta_x: {action.delta_x}, num B: {pool_state.quantity_b}, delta_y: {action.delta_y}"
+    )
     assert pool_state.quantity_a - action.delta_x >= 0
     assert pool_state.quantity_b - action.delta_y >= 0
     assert action.delta_x * action.delta_y <= 0
