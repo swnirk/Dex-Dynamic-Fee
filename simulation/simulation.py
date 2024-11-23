@@ -168,7 +168,9 @@ class Simulation:
         logging.info(
             f"Processing deal for {user_type}, current pool state: {self.pool.liquidity_state}, current fair prices: {prices}"
         )
-        user_action = user.get_user_action(self.pool, self.network_fee, prices, isDynamicFee)
+        # user_action = user.get_user_action(self.pool, self.network_fee, prices, isDynamicFee)
+        user_action = user.get_user_action(self.pool, self.network_fee, prices)
+
         logging.info(f"User action: {user_action}")
         if user_action is None:
             return
@@ -183,20 +185,21 @@ class Simulation:
                 fee = self.pool.get_b_to_a_exchange_fee_rate()
                 self.pool.process_trade(user_action.delta_x, user_action.delta_y*(1-fee))
 
-            # change the fee
-            if user_action.delta_x < 0: 
-                self.num_A_to_B_deals += 1
-            elif user_action.delta_y < 0:
-                self.num_B_to_A_deals += 1
+            # # change the fee
+            # if user_action.delta_x < 0: 
+            #     self.num_A_to_B_deals += 1
+            # elif user_action.delta_y < 0:
+            #     self.num_B_to_A_deals += 1
 
-            delta = self.num_A_to_B_deals - self.num_B_to_A_deals
-            if abs(delta) > 5:
-                if (delta > 0) & (self.pool.alpha < 0.03):
-                    self.pool.alpha += 0.001
-                elif (delta < 0) & (self.pool.gamma < 0.03):
-                    self.pool.gamma += 0.001
+            # delta = self.num_A_to_B_deals - self.num_B_to_A_deals
+            # if abs(delta) > 5:
+            #     if (delta > 0) & (self.pool.alpha < 0.03):
+            #         self.pool.alpha += 0.001
+            #     elif (delta < 0) & (self.pool.gamma < 0.03):
+            #         self.pool.gamma += 0.001
             
-            print(f"num_A_to_B_deals: {self.num_A_to_B_deals}, num_B_to_A_deals: {self.num_B_to_A_deals}, alpha: {self.pool.alpha}, gamma: {self.pool.gamma}")
+            # print(f"num_A_to_B_deals: {self.num_A_to_B_deals}, num_B_to_A_deals: {self.num_B_to_A_deals}, alpha: {self.pool.alpha}, gamma: {self.pool.gamma}")
+            # logging.info(f"num_A_to_B_deals: {self.num_A_to_B_deals}, num_B_to_A_deals: {self.num_B_to_A_deals}, alpha: {self.pool.alpha}, gamma: {self.pool.gamma}")
             
         else:
             fee = self.pool.get_a_to_b_exchange_fee_rate()
