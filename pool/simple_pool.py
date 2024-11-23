@@ -13,7 +13,7 @@ class SimplePool(Pool):
 
     def get_a_to_b_exchange_fee_rate(self) -> float:
         return self.alpha
-    
+
     def get_b_to_a_exchange_fee_rate(self) -> float:
         return self.alpha
 

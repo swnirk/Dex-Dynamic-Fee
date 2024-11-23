@@ -19,7 +19,6 @@ class UninformedUser(User):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
-        # isDynamicFee: bool,
     ) -> Optional[UserAction]:
         token_choice = np.random.choice(["token1", "token2"], size=1, p=[0.5, 0.5])
 
@@ -29,15 +28,11 @@ class UninformedUser(User):
             action = self._get_a_to_b_swap(
                 pool,
                 prices,
-                # token_choice,
-                # isDynamicFee,
             )
         else:
             action = self._get_a_to_b_swap(
                 pool.inverse_pool(),
                 prices.inverse(),
-                # token_choice,
-                # isDynamicFee,
             )
             if action is not None:
                 action = UserAction(action.delta_y, action.delta_x, action.fee)
@@ -52,8 +47,6 @@ class UninformedUser(User):
         self,
         pool: Pool,
         prices: PricesSnapshot,
-        # token_choice: str,
-        # isDynamicFee: bool,
     ) -> Optional[UserAction]:
         mu = 0.0005
         sigma = 0.0001
@@ -67,10 +60,9 @@ class UninformedUser(User):
 
         # User side
         fee = pool.get_a_to_b_exchange_fee_rate()
-            
+
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            # pool.get_a_to_b_exchange_fee_rate(),
             fee,
             prices,
             delta_x,

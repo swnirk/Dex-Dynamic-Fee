@@ -87,8 +87,9 @@ def validate_user_action(
     pool_state: PoolLiquidityState,
     action: UserAction,
 ) -> None:
-    # print(f"num A: {pool_state.quantity_a}, delta_x: {action.delta_x}, num B: {pool_state.quantity_b}, delta_y: {action.delta_y}")
-    logging.info(f"num A: {pool_state.quantity_a}, delta_x: {action.delta_x}, num B: {pool_state.quantity_b}, delta_y: {action.delta_y}")
+    logging.debug(
+        f"Validating user action num A: {pool_state.quantity_a}, delta_x: {action.delta_x}, num B: {pool_state.quantity_b}, delta_y: {action.delta_y}"
+    )
     assert pool_state.quantity_a - action.delta_x >= 0
     assert pool_state.quantity_b - action.delta_y >= 0
     assert action.delta_x * action.delta_y <= 0
