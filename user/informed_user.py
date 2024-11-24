@@ -17,7 +17,6 @@ class InformedUser(User):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
-        # isDynamicFee: bool,
     ) -> Optional[UserAction]:
         q = prices.price_a / prices.price_b
 
@@ -29,7 +28,6 @@ class InformedUser(User):
                 pool,
                 network_fee,
                 prices,
-                # isDynamicFee,
             )
         elif pool.get_a_to_b_exchange_price() < q:
             logging.debug("Users swaps B -> A")
@@ -37,7 +35,6 @@ class InformedUser(User):
                 pool.inverse_pool(),
                 network_fee,
                 prices.inverse(),
-                # isDynamicFee,
             )
             action = UserAction(action.delta_y, action.delta_x, action.fee)
         else:
@@ -54,13 +51,11 @@ class InformedUser(User):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
-        # isDynamicFee: bool,
     ) -> UserAction:
         x = pool.liquidity_state.quantity_a
         y = pool.liquidity_state.quantity_b
         q = prices.price_a / prices.price_b
 
-  
         fee = pool.get_a_to_b_exchange_fee_rate()
         beta = 1 - fee
 
@@ -76,7 +71,6 @@ class InformedUser(User):
 
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            # pool.get_a_to_b_exchange_fee_rate(),
             fee,
             prices,
             optimal_delta_x,
