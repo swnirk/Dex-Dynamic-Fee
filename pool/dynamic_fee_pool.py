@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pool.abstract_pool import Pool, PoolLiquidityState
 import logging
+from balance_change import BalanceChange
 
 
 @dataclass
@@ -9,6 +10,8 @@ class DynamicFeePool(Pool):
 
     alpha: float  # fee rate
     gamma: float
+
+    fee_step: float = 0.0001
 
     num_A_to_B_deals: int = 0
     num_B_to_A_deals: int = 0
@@ -22,9 +25,12 @@ class DynamicFeePool(Pool):
     def get_b_to_a_exchange_fee_rate(self) -> float:
         return self.gamma
 
-    def process_trade(self, delta_a: float, delta_b: float):
+    def process_trade(self, balance_change: BalanceChange):
 
-        self.liquidity_state.process_trade(delta_a, delta_b)
+        self.liquidity_state.process_trade(balance_change)
+
+        delta_a = balance_change.delta_x
+        delta_b = balance_change.delta_y
 
         if delta_a < 0:
             self.num_A_to_B_deals += 1
@@ -33,10 +39,12 @@ class DynamicFeePool(Pool):
 
         delta = self.num_A_to_B_deals - self.num_B_to_A_deals
         if abs(delta) > 5:
-            if delta > 0 and self.alpha < 0.03:
-                self.alpha += 0.001
-            elif delta < 0 and self.gamma < 0.03:
-                self.gamma += 0.001
+            if delta > 0 and self.gamma >= self.fee_step:
+                self.alpha += self.fee_step
+                self.gamma -= self.fee_step
+            elif delta < 0 and self.alpha >= self.fee_step:
+                self.gamma += self.fee_step
+                self.alpha -= self.fee_step
 
         logging.info(
             f"Updated fees: alpha={self.alpha}, gamma={self.gamma}, "

@@ -1,4 +1,5 @@
 from prices_snapshot import PricesSnapshot
+from balance_change import BalanceChange
 
 
 def capital_function(

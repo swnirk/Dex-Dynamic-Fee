@@ -2,9 +2,8 @@ import numpy as np
 from user.abstract_user import (
     User,
     UserAction,
-    construct_user_swap_a_to_b,
-    validate_user_action,
 )
+from user_action import construct_user_swap_a_to_b
 from typing import Optional
 import logging
 from pool.abstract_pool import Pool
@@ -36,13 +35,12 @@ class InformedUser(User):
                 network_fee,
                 prices.inverse(),
             )
-            action = UserAction(action.delta_y, action.delta_x, action.fee)
+            if action is not None:
+                action = action.inverse()
         else:
             return None
 
         logging.debug(f"User action: {action}")
-
-        validate_user_action(pool.liquidity_state, action)
 
         return action
 
@@ -51,7 +49,7 @@ class InformedUser(User):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
-    ) -> UserAction:
+    ) -> Optional[UserAction]:
         x = pool.liquidity_state.quantity_a
         y = pool.liquidity_state.quantity_b
         q = prices.price_a / prices.price_b
@@ -63,16 +61,17 @@ class InformedUser(User):
 
         # In terms of "pool" balance;
         # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
-        optimal_delta_x = (np.sqrt(x * y / q) - x) / beta
-
-        assert optimal_delta_x >= 0
+        optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta
 
         logging.debug(f"Optimal delta x: {optimal_delta_x}")
+
+        if optimal_delta_x < 0:
+            # This may happen when fee is too high for any profitable swap
+            return None
 
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
             fee,
-            prices,
             optimal_delta_x,
         )
 
