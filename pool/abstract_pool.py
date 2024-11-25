@@ -19,6 +19,8 @@ class PoolLiquidityState:
 @dataclass
 class Pool(ABC):
     liquidity_state: PoolLiquidityState
+    AMM_algo: # smth
+    Fee_algo: # smth
 
     @abstractmethod
     def inverse_pool(self) -> "Pool":

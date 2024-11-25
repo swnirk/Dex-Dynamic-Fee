@@ -59,9 +59,13 @@ class InformedUser(User):
 
         assert pool.get_a_to_b_exchange_price() > q
 
-        # In terms of "pool" balance;
-        # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
-        optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta
+
+        if pool.AMM_algo is ConstProductAMM:
+            # In terms of "pool" balance;
+            # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
+            optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta
+        else if pool.AMM_algo is ConstMeanAMM:
+            optimal_delta_x = ....
 
         logging.debug(f"Optimal delta x: {optimal_delta_x}")
 
