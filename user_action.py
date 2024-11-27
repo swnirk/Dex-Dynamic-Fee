@@ -32,6 +32,10 @@ class UserAction:
     def get_pool_balance_change(self) -> BalanceChange:
         return BalanceChange(-self.delta_x - self.fee_x, -self.delta_y - self.fee_y)
 
+    def get_lp_balance_change(self) -> BalanceChange:
+        # LP receives all the tokens paid by the user (including fees)
+        return self.get_user_balance_change().inverse()
+
     def inverse(self) -> "UserAction":
         return UserAction(self.delta_y, self.delta_x, self.fee_y, self.fee_x)
 

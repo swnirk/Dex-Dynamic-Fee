@@ -185,7 +185,7 @@ class Simulation:
         )
 
         self.current_state.lp_state.process_trade(
-            user_action.get_user_balance_change().inverse(),  # LP receives all the tokens paid by the user (including fees)
+            user_action.get_lp_balance_change(),
             prices,
         )
 
