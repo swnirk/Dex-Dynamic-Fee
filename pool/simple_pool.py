@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pool.abstract_pool import Pool, PoolLiquidityState
+from balance_change import BalanceChange
 
 
 @dataclass
@@ -17,5 +18,5 @@ class SimplePool(Pool):
     def get_b_to_a_exchange_fee_rate(self) -> float:
         return self.alpha
 
-    def process_trade(self, delta_a: float, delta_b: float):
-        self.liquidity_state.process_trade(delta_a, delta_b)
+    def process_trade(self, balance_change: BalanceChange):
+        self.liquidity_state.process_trade(balance_change)

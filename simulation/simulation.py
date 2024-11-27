@@ -13,6 +13,8 @@ from copy import deepcopy
 from pool.abstract_pool import Pool
 from prices_snapshot import PricesSnapshot
 import dataclasses
+from balance_change import BalanceChange
+from user_action import validate_user_action
 
 
 class UserType(Enum):
@@ -45,13 +47,14 @@ class ParticipantState:
 
     def process_trade(
         self,
-        delta_x: float,
-        delta_y: float,
+        balance_change: BalanceChange,
         prices: PricesSnapshot,
     ):
-        deal_markout = capital_function(delta_x, delta_y, prices)
+        deal_markout = capital_function(
+            balance_change.delta_x, balance_change.delta_y, prices
+        )
         self.total_markout += deal_markout
-        self.position.process_trade(delta_x, delta_y)
+        self.position.process_trade(balance_change.delta_x, balance_change.delta_y)
 
 
 @dataclasses.dataclass
@@ -172,25 +175,18 @@ class Simulation:
         if user_action is None:
             return
 
-        if user_action.delta_x < 0:
-            fee = self.pool.get_a_to_b_exchange_fee_rate()
-            self.pool.process_trade(
-                user_action.delta_x * (1 - fee), user_action.delta_y
-            )
-        elif user_action.delta_y < 0:
-            fee = self.pool.get_b_to_a_exchange_fee_rate()
-            self.pool.process_trade(
-                user_action.delta_x, user_action.delta_y * (1 - fee)
-            )
+        validate_user_action(self.pool.liquidity_state, user_action)
+
+        self.pool.process_trade(user_action.get_pool_balance_change())
 
         self.current_state.user_states[user_type].process_trade(
-            user_action.delta_x,
-            user_action.delta_y,
+            user_action.get_user_balance_change(),
             prices,
         )
 
         self.current_state.lp_state.process_trade(
-            -user_action.delta_x, -user_action.delta_y, prices
+            user_action.get_lp_balance_change(),
+            prices,
         )
 
         logging.info(
