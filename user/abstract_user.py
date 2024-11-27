@@ -18,13 +18,16 @@ class UserAction:
 
 
 class User(ABC):
+    
+    def __init__(self, AMM_type: str):
+        self.AMM_type = AMM_type
+
     @abstractmethod
     def get_user_action(
         self,
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
-        # isDynamicFee: bool,
     ) -> Optional[UserAction]:
         """
         Args:
@@ -42,6 +45,7 @@ def construct_user_swap_a_to_b(
     fee_rate: float,
     prices: PricesSnapshot,
     amount_to_exchange_A: float,
+    AMM_type: str,
 ) -> UserAction:
     """
     Returns formed UserAction struct based amount_to_exchange of token A
@@ -52,13 +56,13 @@ def construct_user_swap_a_to_b(
     assert amount_to_exchange_A >= 0
 
     pool_change_b = get_amm_exchange_value_a_to_b(
-        pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A
-    )
+            pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A, fee_rate, AMM_type
+        )
 
     assert pool_change_b <= 0
 
     fee = capital_function(
-        amount_to_exchange_A * fee_rate,
+        amount_to_exchange_A,
         0,
         prices,
     )
@@ -70,6 +74,7 @@ def construct_user_swap_b_to_a(
     fee_rate: float,
     prices: PricesSnapshot,
     amount_to_exchange_B: float,
+    AMM_type: str,
 ) -> UserAction:
     """
     See construct_user_swap_a_to_b
@@ -79,7 +84,9 @@ def construct_user_swap_b_to_a(
         fee_rate,
         prices,
         amount_to_exchange_B,
+        AMM_type,
     )
+
     return UserAction(action.delta_y, action.delta_x, action.fee)
 
 

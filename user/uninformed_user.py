@@ -14,6 +14,7 @@ from prices_snapshot import PricesSnapshot
 
 
 class UninformedUser(User):
+
     def get_user_action(
         self,
         pool: Pool,
@@ -28,11 +29,13 @@ class UninformedUser(User):
             action = self._get_a_to_b_swap(
                 pool,
                 prices,
+                self.AMM_type,
             )
         else:
             action = self._get_a_to_b_swap(
                 pool.inverse_pool(),
                 prices.inverse(),
+                self.AMM_type,
             )
             if action is not None:
                 action = UserAction(action.delta_y, action.delta_x, action.fee)
@@ -47,6 +50,7 @@ class UninformedUser(User):
         self,
         pool: Pool,
         prices: PricesSnapshot,
+        AMM_type: str,
     ) -> Optional[UserAction]:
         mu = 0.0005
         sigma = 0.0001
@@ -66,15 +70,18 @@ class UninformedUser(User):
             fee,
             prices,
             delta_x,
+            AMM_type,
         )
         action_no_fee = construct_user_swap_a_to_b(
-            pool.liquidity_state, 0, prices, delta_x
+            pool.liquidity_state,
+            0, 
+            prices, 
+            delta_x, 
+            AMM_type,
         )
 
         delta_P = capital_function(action.delta_x, action.delta_y, prices)
-        delta_P_no_fee = capital_function(
-            action_no_fee.delta_x, action_no_fee.delta_y, prices
-        )
+        delta_P_no_fee = capital_function(action_no_fee.delta_x, action_no_fee.delta_y, prices)
 
         r = delta_P / delta_P_no_fee
 

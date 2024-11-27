@@ -18,7 +18,7 @@ def capital_function(
 
 
 def get_amm_exchange_value_a_to_b(
-    quantity_A: float, quantity_B: float, delta_A: float
+    quantity_A: float, quantity_B: float, delta_A: float, fee_rate: float, AMM_type: str,
 ) -> float:
     """
     Calculate the value of the asset B that the AMM will return for the given amount of asset A
@@ -30,4 +30,7 @@ def get_amm_exchange_value_a_to_b(
     Returns:
     float: the value of the asset B that the AMM will return
     """
-    return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    if AMM_type == "constant_product":
+        return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    elif AMM_type == "constant_sum":
+        return -delta_A*(1 - fee_rate)

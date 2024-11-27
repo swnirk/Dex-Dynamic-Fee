@@ -12,6 +12,7 @@ from prices_snapshot import PricesSnapshot
 
 
 class InformedUser(User):
+
     def get_user_action(
         self,
         pool: Pool,
@@ -28,6 +29,7 @@ class InformedUser(User):
                 pool,
                 network_fee,
                 prices,
+                self.AMM_type,
             )
         elif pool.get_a_to_b_exchange_price() < q:
             logging.debug("Users swaps B -> A")
@@ -35,6 +37,7 @@ class InformedUser(User):
                 pool.inverse_pool(),
                 network_fee,
                 prices.inverse(),
+                self.AMM_type,
             )
             action = UserAction(action.delta_y, action.delta_x, action.fee)
         else:
@@ -51,6 +54,7 @@ class InformedUser(User):
         pool: Pool,
         network_fee: float,
         prices: PricesSnapshot,
+        AMM_type: str,
     ) -> UserAction:
         x = pool.liquidity_state.quantity_a
         y = pool.liquidity_state.quantity_b
@@ -63,7 +67,13 @@ class InformedUser(User):
 
         # In terms of "pool" balance;
         # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
-        optimal_delta_x = (np.sqrt(x * y / q) - x) / beta
+        if AMM_type == "constant_product":
+            optimal_delta_x = (np.sqrt(x * y / q) - x) / beta
+        elif AMM_type == "constant_sum":
+            mu = 0.0005
+            sigma = 0.0001
+            share = np.random.normal(mu, sigma)
+            optimal_delta_x = share * x
 
         assert optimal_delta_x >= 0
 
@@ -74,6 +84,7 @@ class InformedUser(User):
             fee,
             prices,
             optimal_delta_x,
+            AMM_type,
         )
 
         return action
