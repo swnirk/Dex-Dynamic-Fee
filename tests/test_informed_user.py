@@ -38,6 +38,7 @@ def find_optimal_action_by_bruteforce(
             pool.liquidity_state,
             pool.get_a_to_b_exchange_fee_rate(),
             amount_to_exchange_A,
+            pool,
         )
         _process_action(action)
 

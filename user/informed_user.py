@@ -59,13 +59,17 @@ class InformedUser(User):
 
         assert pool.get_a_to_b_exchange_price() > q
 
-
-        if pool.AMM_algo is ConstProductAMM:
-            # In terms of "pool" balance;
-            # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
+        # In terms of "pool" balance;
+        # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
+        if pool.get_amm_type() == 'ConstProductAMM':
             optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta
-        else if pool.AMM_algo is ConstMeanAMM:
-            optimal_delta_x = ....
+        elif pool.get_amm_type() == 'ConstSumAMM':
+            mu = 0.0005
+            sigma = 0.0001
+            share = np.random.normal(mu, sigma)
+            optimal_delta_x = share * pool.liquidity_state.quantity_a
+        else:
+            print("Unknown AMM type")
 
         logging.debug(f"Optimal delta x: {optimal_delta_x}")
 
@@ -77,6 +81,7 @@ class InformedUser(User):
             pool.liquidity_state,
             fee,
             optimal_delta_x,
+            pool,
         )
 
         return action

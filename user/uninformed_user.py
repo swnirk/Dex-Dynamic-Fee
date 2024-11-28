@@ -59,6 +59,7 @@ class UninformedUser(User):
             pool.liquidity_state,
             fee,
             delta_x,
+            pool,
         )
 
         return action

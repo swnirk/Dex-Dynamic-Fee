@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from common import get_amm_exchange_value_a_to_b
-from pool.abstract_pool import PoolLiquidityState
+from pool.abstract_pool import PoolLiquidityState, Pool
 import logging
 from balance_change import BalanceChange
 
@@ -40,6 +40,7 @@ def construct_user_swap_a_to_b(
     pool_state: PoolLiquidityState,
     fee_rate: float,
     amount_to_exchange_A: float,
+    pool: Pool
 ) -> UserAction:
     """
     Returns formed UserAction struct based amount_to_exchange of token A
@@ -55,7 +56,7 @@ def construct_user_swap_a_to_b(
     assert amount_to_exchange_A_after_fee >= 0
 
     pool_change_b = get_amm_exchange_value_a_to_b(
-        pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A_after_fee
+        pool_state.quantity_a, pool_state.quantity_b, amount_to_exchange_A_after_fee, pool
     )
 
     assert pool_change_b <= 0
@@ -67,6 +68,7 @@ def construct_user_swap_b_to_a(
     pool_state: PoolLiquidityState,
     fee_rate: float,
     amount_to_exchange_B: float,
+    pool: Pool
 ) -> UserAction:
     """
     See construct_user_swap_a_to_b
@@ -75,6 +77,7 @@ def construct_user_swap_b_to_a(
         pool_state.inverse(),
         fee_rate,
         amount_to_exchange_B,
+        pool.inverse_pool(),
     )
     return action.inverse()
 

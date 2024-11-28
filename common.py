@@ -1,5 +1,5 @@
 from prices_snapshot import PricesSnapshot
-
+from pool.abstract_pool import Pool
 
 def capital_function(
     position_A: float, position_B: float, prices: PricesSnapshot
@@ -18,7 +18,7 @@ def capital_function(
 
 
 def get_amm_exchange_value_a_to_b(
-    quantity_A: float, quantity_B: float, delta_A: float
+    quantity_A: float, quantity_B: float, delta_A: float, pool: Pool
 ) -> float:
     """
     Calculate the value of the asset B that the AMM will return for the given amount of asset A
@@ -30,4 +30,11 @@ def get_amm_exchange_value_a_to_b(
     Returns:
     float: the value of the asset B that the AMM will return
     """
-    return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    if pool.get_amm_type() == 'ConstProductAMM':
+        return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    
+    elif pool.get_amm_type() == 'ConstSumAMM':
+        return -delta_A
+    
+    else:
+        return "Unknown AMM type"

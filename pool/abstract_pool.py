@@ -14,13 +14,14 @@ class PoolLiquidityState:
     def process_trade(self, balance_change: BalanceChange):
         self.quantity_a += balance_change.delta_x
         self.quantity_b += balance_change.delta_y
+    
 
 
 @dataclass
 class Pool(ABC):
     liquidity_state: PoolLiquidityState
-    AMM_algo: # smth
-    Fee_algo: # smth
+    AMM_algo: str
+    # Fee_algo: # smth
 
     @abstractmethod
     def inverse_pool(self) -> "Pool":
@@ -38,5 +39,20 @@ class Pool(ABC):
     def process_trade(self, balance_change: BalanceChange):
         pass
 
+    def get_amm_type(self) -> str:
+        return self.AMM_algo
+
     def get_a_to_b_exchange_price(self) -> float:
         return self.liquidity_state.quantity_b / self.liquidity_state.quantity_a
+    
+    # def get_amm_exchange_value_a_to_b(self, balance_change: BalanceChange):
+    #     if self.AMM_algo == 'ConstProductAMM':
+    #         quantity_A = self.liquidity_state.quantity_a
+    #         quantity_B = self.liquidity_state.quantity_b
+    #         delta_A = balance_change.delta_x
+    #         return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    #     elif self.AMM_algo == 'ConstSumAMM':
+    #         return
+
+        
+    
