@@ -136,6 +136,10 @@ class Simulation:
 
             prices_snapshot = self._get_prices_snapshot(row)
 
+            self.pool.process_oracle_price(
+                a_to_b_price=prices_snapshot.get_a_to_b_price()
+            )
+
             if self._trade(p_UU):
                 self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
 

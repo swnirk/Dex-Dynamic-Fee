@@ -26,4 +26,4 @@ class Pool:
         self.fee_algorithm.process_trade(balance_change)
 
     def get_a_to_b_exchange_price(self) -> float:
-        return self.liquidity_state.quantity_b / self.liquidity_state.quantity_a
+        return self.liquidity_state.get_a_to_b_exchange_price()
