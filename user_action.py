@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from common import get_amm_exchange_value_a_to_b
-from pool.abstract_pool import PoolLiquidityState
+from pool.pool import PoolLiquidityState
 import logging
 from balance_change import BalanceChange
 

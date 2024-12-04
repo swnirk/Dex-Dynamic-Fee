@@ -1,7 +1,7 @@
 import pytest
 
-from pool.abstract_pool import Pool, PoolLiquidityState
-from pool.simple_pool import SimplePool
+from pool.pool import Pool, PoolLiquidityState
+from fee_algorithm.fixed_fee import FixedFee
 from user.informed_user import InformedUser
 from user.uninformed_user import UninformedUser
 from user.abstract_user import UserAction
@@ -21,12 +21,14 @@ class Params:
 
 PARAMS = [
     Params(
-        pool=SimplePool(
+        pool=Pool(
             liquidity_state=PoolLiquidityState(
                 liquidity_a,
                 liquidity_b,
             ),
-            alpha=alpha,
+            fee_algorithm=FixedFee(
+                exchange_fee_rate=alpha,
+            ),
         ),
         network_fee=network_fee,
         prices=prices,

@@ -10,7 +10,7 @@ from enum import Enum
 import enum
 import logging
 from copy import deepcopy
-from pool.abstract_pool import Pool
+from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
 import dataclasses
 from balance_change import BalanceChange

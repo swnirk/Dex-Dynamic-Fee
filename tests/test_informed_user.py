@@ -7,9 +7,9 @@ from user_action import (
     construct_user_swap_a_to_b,
     construct_user_swap_b_to_a,
 )
-from pool.abstract_pool import Pool
+from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
-from pool.abstract_pool import Pool
+from pool.pool import Pool
 from common import capital_function
 from user.informed_user import InformedUser
 
@@ -36,7 +36,7 @@ def find_optimal_action_by_bruteforce(
     ):
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            pool.get_a_to_b_exchange_fee_rate(),
+            pool.fee_algorithm.get_a_to_b_exchange_fee_rate(pool.liquidity_state),
             amount_to_exchange_A,
         )
         _process_action(action)
@@ -46,7 +46,7 @@ def find_optimal_action_by_bruteforce(
     ):
         action = construct_user_swap_b_to_a(
             pool.liquidity_state,
-            pool.get_b_to_a_exchange_fee_rate(),
+            pool.fee_algorithm.get_b_to_a_exchange_fee_rate(pool.liquidity_state),
             amount_to_exchange_B,
         )
         _process_action(action)

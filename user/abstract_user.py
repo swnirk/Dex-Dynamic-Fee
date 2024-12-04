@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from pool.abstract_pool import Pool
+from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
 from user_action import UserAction
 
