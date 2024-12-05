@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from fee_algorithm.base import FeeAlgorithm
+from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
 from pool.liquidity_state import PoolLiquidityState
 from balance_change import BalanceChange
 from typing import Optional
 
 
 @dataclass
-class UnequalFee(FeeAlgorithm):
+class UnequalFee(FeeKnownBeforeTradeAlgorithm):
     fee_rate_in_arbitrage_direction: float
     fee_rate_in_non_arbitrage_direction: float
 
@@ -28,7 +28,7 @@ class UnequalFee(FeeAlgorithm):
     def process_trade(self, balance_change: BalanceChange):
         pass
 
-    def inverse(self) -> "FeeAlgorithm":
+    def inverse(self) -> "UnequalFee":
         return UnequalFee(
             fee_rate_in_arbitrage_direction=self.fee_rate_in_arbitrage_direction,
             fee_rate_in_non_arbitrage_direction=self.fee_rate_in_non_arbitrage_direction,

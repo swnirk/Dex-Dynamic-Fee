@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from fee_algorithm.base import FeeAlgorithm
+from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
 from pool.liquidity_state import PoolLiquidityState
 from balance_change import BalanceChange
 import logging
 
 
 @dataclass
-class BasedOnTradeCountFee(FeeAlgorithm):
+class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
     a_to_b_exchange_fee_rate: float
     b_to_a_exchange_fee_rate: float
 

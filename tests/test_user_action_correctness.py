@@ -2,6 +2,7 @@ import pytest
 
 from pool.pool import Pool, PoolLiquidityState
 from fee_algorithm.fixed_fee import FixedFee
+from fee_algorithm.fee_based_on_trade import FeeBasedOnTrade
 from user.informed_user import InformedUser
 from user.uninformed_user import UninformedUser
 from user.abstract_user import UserAction
@@ -10,45 +11,23 @@ from prices_snapshot import PricesSnapshot
 import dataclasses
 from copy import deepcopy
 import numpy as np
+from tests.pool_snapshot import PoolSnapshot, POOL_SNAPSHOTS_TO_TEST
+from user.abstract_user import User
 
 
 @dataclasses.dataclass
-class Params:
-    pool: Pool
-    network_fee: float
-    prices: PricesSnapshot
+class CorrectnessTestParams:
+    pool_snapshot: PoolSnapshot
+    user: User
 
 
 PARAMS = [
-    Params(
-        pool=Pool(
-            liquidity_state=PoolLiquidityState(
-                liquidity_a,
-                liquidity_b,
-            ),
-            fee_algorithm=FixedFee(
-                exchange_fee_rate=alpha,
-            ),
-        ),
-        network_fee=network_fee,
-        prices=prices,
+    CorrectnessTestParams(
+        pool_snapshot=pool_snapshot,
+        user=user,
     )
-    for (liquidity_a, liquidity_b) in [
-        (1, 1),
-        (100, 100),
-        (10000, 10000),
-        (100, 1),
-        (1, 100),
-    ]
-    for alpha in [0.01, 0.1, 0.9]
-    for network_fee in [0.01]
-    for prices in [
-        PricesSnapshot(2, 1),
-        PricesSnapshot(1, 2),
-        PricesSnapshot(1, 1),
-        PricesSnapshot(100, 1),
-        PricesSnapshot(1, 100),
-    ]
+    for user in [InformedUser(), UninformedUser()]
+    for pool_snapshot in POOL_SNAPSHOTS_TO_TEST
 ]
 
 
@@ -66,28 +45,18 @@ def validate_constant_product_invariant_after_deal(
 
 
 @pytest.mark.parametrize("test_params", PARAMS)
-def test_informed_user_action_correctness(test_params: Params):
+def test_user_action_correctness(test_params: CorrectnessTestParams):
     action = InformedUser().get_user_action(
-        pool=test_params.pool,
-        network_fee=test_params.network_fee,
-        prices=test_params.prices,
+        pool=test_params.pool_snapshot.pool,
+        network_fee=test_params.pool_snapshot.network_fee,
+        prices=test_params.pool_snapshot.prices,
     )
     print(f"User action: {action}")
 
     if action is not None:
-        validate_user_action(pool_state=test_params.pool.liquidity_state, action=action)
-        validate_constant_product_invariant_after_deal(
-            pool_state=test_params.pool.liquidity_state, action=action
+        validate_user_action(
+            pool_state=test_params.pool_snapshot.pool.liquidity_state, action=action
         )
-
-
-@pytest.mark.parametrize("test_params", PARAMS)
-def test_uninformed_user_action_correctness(test_params: Params):
-    action = UninformedUser().get_user_action(
-        pool=test_params.pool,
-        network_fee=test_params.network_fee,
-        prices=test_params.prices,
-    )
-
-    if action is not None:
-        validate_user_action(pool_state=test_params.pool.liquidity_state, action=action)
+        validate_constant_product_invariant_after_deal(
+            pool_state=test_params.pool_snapshot.pool.liquidity_state, action=action
+        )

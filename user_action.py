@@ -3,6 +3,7 @@ from common import get_amm_exchange_value_a_to_b
 from pool.pool import PoolLiquidityState
 import logging
 from balance_change import BalanceChange
+from fee_algorithm.base import FeeAlgorithm
 
 
 @dataclass
@@ -42,7 +43,7 @@ class UserAction:
 
 def construct_user_swap_a_to_b(
     pool_state: PoolLiquidityState,
-    fee_rate: float,
+    fee_algo: FeeAlgorithm,
     amount_to_exchange_A: float,
 ) -> UserAction:
     """
@@ -53,8 +54,8 @@ def construct_user_swap_a_to_b(
     """
     assert amount_to_exchange_A >= 0
 
-    amount_to_exchange_A_after_fee = amount_to_exchange_A * (1 - fee_rate)
-    fee_paid_in_A = amount_to_exchange_A * fee_rate
+    fee_paid_in_A = fee_algo.get_a_to_b_trade_fee(pool_state, amount_to_exchange_A)
+    amount_to_exchange_A_after_fee = amount_to_exchange_A - fee_paid_in_A
 
     assert amount_to_exchange_A_after_fee >= 0
 
@@ -69,7 +70,7 @@ def construct_user_swap_a_to_b(
 
 def construct_user_swap_b_to_a(
     pool_state: PoolLiquidityState,
-    fee_rate: float,
+    fee_algo: FeeAlgorithm,
     amount_to_exchange_B: float,
 ) -> UserAction:
     """
@@ -77,7 +78,7 @@ def construct_user_swap_b_to_a(
     """
     action = construct_user_swap_a_to_b(
         pool_state.inverse(),
-        fee_rate,
+        fee_algo.inverse(),
         amount_to_exchange_B,
     )
     return action.inverse()

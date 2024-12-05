@@ -1,17 +1,17 @@
 from dataclasses import dataclass
-from fee_algorithm.base import FeeAlgorithm
+from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
 from pool.liquidity_state import PoolLiquidityState
 from balance_change import BalanceChange
 
 
 @dataclass
-class FixedFee(FeeAlgorithm):
+class FixedFee(FeeKnownBeforeTradeAlgorithm):
     exchange_fee_rate: float
 
-    def get_a_to_b_exchange_fee_rate(self, _: PoolLiquidityState) -> float:
+    def get_a_to_b_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.exchange_fee_rate
 
-    def get_b_to_a_exchange_fee_rate(self, _: PoolLiquidityState) -> float:
+    def get_b_to_a_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.exchange_fee_rate
 
     def process_trade(self, pool_balance_change: BalanceChange) -> None:
@@ -20,5 +20,5 @@ class FixedFee(FeeAlgorithm):
     def process_oracle_price(self, a_to_b_price: float):
         pass
 
-    def inverse(self) -> "FeeAlgorithm":
+    def inverse(self) -> "FixedFee":
         return self

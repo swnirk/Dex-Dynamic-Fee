@@ -12,12 +12,6 @@ class Pool:
     def inverse_pool(self) -> "Pool":
         return Pool(self.liquidity_state.inverse(), self.fee_algorithm.inverse())
 
-    def get_a_to_b_exchange_fee_rate(self) -> float:
-        return self.fee_algorithm.get_a_to_b_exchange_fee_rate(self.liquidity_state)
-
-    def get_b_to_a_exchange_fee_rate(self) -> float:
-        return self.fee_algorithm.get_b_to_a_exchange_fee_rate(self.liquidity_state)
-
     def process_oracle_price(self, a_to_b_price: float):
         self.fee_algorithm.process_oracle_price(a_to_b_price)
 

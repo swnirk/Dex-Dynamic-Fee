@@ -53,11 +53,9 @@ class UninformedUser(User):
         if share == 0:
             return None
 
-        fee = pool.get_a_to_b_exchange_fee_rate()
-
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
-            fee,
+            pool.fee_algorithm,
             delta_x,
         )
 
