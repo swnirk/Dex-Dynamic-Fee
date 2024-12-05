@@ -126,12 +126,12 @@ class InformedUser(User):
         x_old = liquidity_state.quantity_a
         y_old = liquidity_state.quantity_b
 
-        x_opt = (
-            np.sqrt(
-                (p2 * x_old * y_old * oracle - p1 * r * y_old * x_old) / (p1 * oracle)
-            )
-            - x_old
-        )
+        tmp = p2 * x_old * y_old * oracle - p1 * r * y_old * x_old
+
+        if tmp < 0:
+            return None
+
+        x_opt = np.sqrt((tmp) / (p1 * oracle)) - x_old
 
         if x_opt < 0 or np.isnan(x_opt):
             return None
