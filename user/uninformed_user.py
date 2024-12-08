@@ -43,14 +43,16 @@ class UninformedUser(User):
         pool: Pool,
         prices: PricesSnapshot,
     ) -> Optional[UserAction]:
-        mu = 0.0005
-        sigma = 0.0001
-        share = np.random.normal(mu, sigma)
+        mean = 0.9
+        std = 2.4
+        delta_x = np.random.normal(mean, std)
+        if delta_x < 0:
+            delta_x = 0.5
 
         # "Pool" side;
-        delta_x = share * pool.liquidity_state.quantity_a
+        # delta_x = share * pool.liquidity_state.quantity_a
 
-        if share == 0:
+        if delta_x == 0:
             return None
 
         action = construct_user_swap_a_to_b(

@@ -90,6 +90,7 @@ class Simulation:
     def simulate(
         self,
         p_UU: float,
+        num_UU: int,
         informed_user: InformedUser,
         uninformed_user: UninformedUser,
         prices: pd.DataFrame,
@@ -101,6 +102,7 @@ class Simulation:
 
         Args:
         p_UU: float, the probability of the uninformed user to make a deal
+        num_UU: int, the number of uninformed users
         informed_user: InformedUser, the informed user
         uninformed_user: UninformedUser, the uninformed user
         prices: pd.DataFrame, the prices of the assets
@@ -139,9 +141,10 @@ class Simulation:
             self.pool.process_oracle_price(
                 a_to_b_price=prices_snapshot.get_a_to_b_price()
             )
-
-            if self._trade(p_UU):
-                self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
+    
+            for _ in range(num_UU):
+                if self._trade(p_UU):
+                    self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
 
             self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
 
