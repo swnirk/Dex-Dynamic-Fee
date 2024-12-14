@@ -1,7 +1,5 @@
 import dataclasses
 from user.abstract_user import User
-from user.informed_user import InformedUser
-from user.uninformed_user import UninformedUser
 import numpy as np
 import pandas as pd
 import dataclasses
@@ -91,8 +89,8 @@ class Simulation:
         self,
         p_UU: float,
         num_UU: int,
-        informed_user: InformedUser,
-        uninformed_user: UninformedUser,
+        informed_user: User,
+        uninformed_user: User,
         prices: pd.DataFrame,
     ) -> SimulationResult:
         """
@@ -141,10 +139,12 @@ class Simulation:
             self.pool.process_oracle_price(
                 a_to_b_price=prices_snapshot.get_a_to_b_price()
             )
-    
+
             for _ in range(num_UU):
                 if self._trade(p_UU):
-                    self.process_deal(UserType.UNINFORMED, uninformed_user, prices_snapshot)
+                    self.process_deal(
+                        UserType.UNINFORMED, uninformed_user, prices_snapshot
+                    )
 
             self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
 
