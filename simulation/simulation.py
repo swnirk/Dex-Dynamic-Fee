@@ -131,6 +131,8 @@ class Simulation:
 
         self.current_state.lp_state.update_valuation(initial_prices_snapshot)
 
+        self.pool.fee_algorithm.process_initial_pool_state(self.pool.liquidity_state)
+
         for _, row in prices.iterrows():
             self.current_state = deepcopy(self.current_state)
 
@@ -161,6 +163,8 @@ class Simulation:
 
             result.snapshots.append(self.current_state)
             result.timestamps.append(row["time"])
+
+            self.pool.fee_algorithm.process_block_end(self.pool.liquidity_state)
 
         return result
 

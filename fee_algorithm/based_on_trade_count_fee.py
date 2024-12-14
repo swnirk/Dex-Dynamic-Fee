@@ -18,10 +18,13 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
     def get_a_to_b_exchange_fee_rate(self, _: PoolLiquidityState) -> float:
         return self.a_to_b_exchange_fee_rate
 
-    def get_b_to_a_exchange_fee_rate(self, _: PoolLiquidityState) -> float:
-        return self.b_to_a_exchange_fee_rate
-
     def process_oracle_price(self, a_to_b_price: float) -> None:
+        pass
+
+    def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
+        pass
+
+    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
         pass
 
     def inverse(self) -> "BasedOnTradeCountFee":

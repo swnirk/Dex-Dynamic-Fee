@@ -39,6 +39,12 @@ class FeeBasedOnTrade(FeeAlgorithm):
     def process_trade(self, _: BalanceChange) -> None:
         pass
 
+    def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
+        pass
+
+    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+        pass
+
     def inverse(self) -> "FeeBasedOnTrade":
         return FeeBasedOnTrade(
             default_fee_rate=self.default_fee_rate,

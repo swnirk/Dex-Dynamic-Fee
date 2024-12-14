@@ -19,13 +19,16 @@ class UnequalFee(FeeKnownBeforeTradeAlgorithm):
         else:
             return self.fee_rate_in_non_arbitrage_direction
 
-    def get_b_to_a_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
-        return self.inverse().get_a_to_b_exchange_fee_rate(pool_state.inverse())
-
     def process_oracle_price(self, a_to_b_price: float):
         self.oracle_a_to_b_price = a_to_b_price
 
     def process_trade(self, balance_change: BalanceChange):
+        pass
+
+    def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
+        pass
+
+    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
         pass
 
     def inverse(self) -> "UnequalFee":
