@@ -52,4 +52,11 @@ class InformedUserBruteforce(User):
             )
             _process_action(action)
 
-        return max(possible_actions, key=lambda x: x[1])[0]
+        optimal_action, optimal_action_markout = max(
+            possible_actions, key=lambda x: x[1]
+        )
+
+        if optimal_action_markout < 0:
+            return None
+
+        return optimal_action

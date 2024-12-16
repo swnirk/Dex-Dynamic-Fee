@@ -11,6 +11,7 @@ from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
 from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
 from fee_algorithm.fee_based_on_trade import FeeBasedOnTrade
+from common import capital_function
 
 
 class InformedUser(User):
@@ -82,11 +83,21 @@ class InformedUser(User):
         if optimal_delta_x is None:
             return None
 
-        return construct_user_swap_a_to_b(
+        optimal_action = construct_user_swap_a_to_b(
             pool_state=pool.liquidity_state,
             fee_algo=pool.fee_algorithm,
             amount_to_exchange_A=optimal_delta_x,
         )
+
+        user_balance_change = optimal_action.get_user_balance_change()
+        optimal_action_markout = capital_function(
+            user_balance_change.delta_x, user_balance_change.delta_y, prices
+        )
+        assert (
+            optimal_action_markout >= 0
+        ), f"Markout is negative: {optimal_action_markout}"
+
+        return optimal_action if optimal_action_markout >= 0 else None
 
     def _get_optimal_a_to_b_swap_when_fee_known_before_trade(
         self,
