@@ -4,6 +4,8 @@ from pool.pool import PoolLiquidityState
 import logging
 from balance_change import BalanceChange
 from fee_algorithm.base import FeeAlgorithm
+from common import capital_function
+from prices_snapshot import PricesSnapshot
 
 
 @dataclass
@@ -15,6 +17,8 @@ class UserAction:
     # fee_x and fee_y are "user-side" -- fee paid by user (thus, always non-negative)
     fee_x: float
     fee_y: float
+
+    network_fee: float
 
     # For example, if user want to change X -> Y, then:
     # - delta_x < 0
@@ -37,20 +41,40 @@ class UserAction:
         # LP receives all the tokens paid by the user (including fees)
         return self.get_user_balance_change().inverse()
 
+    def get_lp_markout(self, prices: PricesSnapshot) -> float:
+        lp_balance_change = self.get_lp_balance_change()
+        return capital_function(
+            lp_balance_change.delta_x, lp_balance_change.delta_y, prices
+        )
+
+    def get_user_markout(self, prices: PricesSnapshot) -> float:
+        user_balance_change = self.get_user_balance_change()
+        return (
+            capital_function(
+                user_balance_change.delta_x, user_balance_change.delta_y, prices
+            )
+            - self.network_fee
+        )
+
     def inverse(self) -> "UserAction":
-        return UserAction(self.delta_y, self.delta_x, self.fee_y, self.fee_x)
+        return UserAction(
+            self.delta_y, self.delta_x, self.fee_y, self.fee_x, self.network_fee
+        )
 
 
 def construct_user_swap_a_to_b(
     pool_state: PoolLiquidityState,
     fee_algo: FeeAlgorithm,
+    *,
     amount_to_exchange_A: float,
+    network_fee: float,
 ) -> UserAction:
     """
     Returns formed UserAction struct based amount_to_exchange of token A
 
     Args:
     amount_to_exchange_A: float, the amount of token A user sends to the pool (before any fee deduction)
+    network_fee: float, the network fee user pays for the transaction
     """
     assert amount_to_exchange_A >= 0
 
@@ -65,13 +89,17 @@ def construct_user_swap_a_to_b(
 
     assert pool_change_b <= 0
 
-    return UserAction(-amount_to_exchange_A, -pool_change_b, fee_paid_in_A, 0)
+    return UserAction(
+        -amount_to_exchange_A, -pool_change_b, fee_paid_in_A, 0, network_fee
+    )
 
 
 def construct_user_swap_b_to_a(
     pool_state: PoolLiquidityState,
     fee_algo: FeeAlgorithm,
+    *,
     amount_to_exchange_B: float,
+    network_fee: float,
 ) -> UserAction:
     """
     See construct_user_swap_a_to_b
@@ -79,7 +107,8 @@ def construct_user_swap_b_to_a(
     action = construct_user_swap_a_to_b(
         pool_state.inverse(),
         fee_algo.inverse(),
-        amount_to_exchange_B,
+        amount_to_exchange_A=amount_to_exchange_B,
+        network_fee=network_fee,
     )
     return action.inverse()
 

@@ -38,6 +38,8 @@ class Experiment:
     # TODO: parameterize by total pool value (in stable coin)
     total_tokens: int = 100000
 
+    network_fee: float = 5  # in stable coin
+
 
 @dataclass
 class ExperimentResult:

@@ -28,7 +28,7 @@ def run_experiment(
 
     simulation = Simulation(
         pool=pool,
-        network_fee=0,
+        network_fee=experiment.network_fee,
     )
 
     simulation_result = simulation.simulate(

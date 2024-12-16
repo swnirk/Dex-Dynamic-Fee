@@ -24,11 +24,13 @@ class UninformedUser(User):
             action = self._get_a_to_b_swap(
                 pool,
                 prices,
+                network_fee,
             )
         else:
             action = self._get_a_to_b_swap(
                 pool.inverse_pool(),
                 prices.inverse(),
+                network_fee,
             )
             if action is not None:
                 action = action.inverse()
@@ -42,6 +44,7 @@ class UninformedUser(User):
         self,
         pool: Pool,
         prices: PricesSnapshot,
+        network_fee: float,
     ) -> Optional[UserAction]:
         mu = 0.00005
         sigma = 0.00001
@@ -56,7 +59,8 @@ class UninformedUser(User):
         action = construct_user_swap_a_to_b(
             pool.liquidity_state,
             pool.fee_algorithm,
-            delta_x,
+            amount_to_exchange_A=delta_x,
+            network_fee=network_fee,
         )
 
         return action

@@ -54,7 +54,7 @@ POOL_SNAPSHOTS_TO_TEST = [
         (100, 1),
         (1, 100),
     ]
-    for network_fee in [0.01]
+    for network_fee in [0, 0.1, 1000]
     for prices in [
         PricesSnapshot(2, 1),
         PricesSnapshot(1, 2),

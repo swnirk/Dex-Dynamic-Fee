@@ -1,6 +1,5 @@
 import pytest
 
-from common import capital_function
 from user.informed_user import InformedUser
 from user.informed_user_bruteforce import InformedUserBruteforce
 from tests.pool_snapshot import PoolSnapshot, POOL_SNAPSHOTS_TO_TEST
@@ -25,18 +24,14 @@ def test_informed_user_optimal_action(test_params: PoolSnapshot):
 
     theoretical_action_markout = 0
     if theoretical_action is not None:
-        theoretical_action_markout = capital_function(
-            theoretical_action.get_user_balance_change().delta_x,
-            theoretical_action.get_user_balance_change().delta_y,
-            test_params.prices,
+        theoretical_action_markout = theoretical_action.get_user_markout(
+            test_params.prices
         )
 
     bruteforce_action_markout = 0
     if bruteforce_action is not None:
-        bruteforce_action_markout = capital_function(
-            bruteforce_action.get_user_balance_change().delta_x,
-            bruteforce_action.get_user_balance_change().delta_y,
-            test_params.prices,
+        bruteforce_action_markout = bruteforce_action.get_user_markout(
+            test_params.prices
         )
 
     assert theoretical_action_markout >= bruteforce_action_markout

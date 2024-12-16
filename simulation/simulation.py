@@ -46,11 +46,8 @@ class ParticipantState:
     def process_trade(
         self,
         balance_change: BalanceChange,
-        prices: PricesSnapshot,
+        deal_markout: float,
     ):
-        deal_markout = capital_function(
-            balance_change.delta_x, balance_change.delta_y, prices
-        )
         self.total_markout += deal_markout
         self.position.process_trade(balance_change.delta_x, balance_change.delta_y)
 
@@ -192,12 +189,12 @@ class Simulation:
 
         self.current_state.user_states[user_type].process_trade(
             user_action.get_user_balance_change(),
-            prices,
+            user_action.get_user_markout(prices),
         )
 
         self.current_state.lp_state.process_trade(
             user_action.get_lp_balance_change(),
-            prices,
+            user_action.get_lp_markout(prices),
         )
 
         logging.info(

@@ -64,9 +64,6 @@ class InformedUser(User):
                 ),
             )
         elif isinstance(pool.fee_algorithm, FeeBasedOnTrade):
-            # raise NotImplementedError(
-            #     "FeeUnknownBeforeTradeAlgorithm is not implemented"
-            # )
             assert pool.fee_algorithm.oracle_a_to_b_price is not None
             optimal_delta_x = self._get_optimal_a_to_b_swap_fee_based_on_trade(
                 pool.liquidity_state,
@@ -82,11 +79,19 @@ class InformedUser(User):
         if optimal_delta_x is None:
             return None
 
-        return construct_user_swap_a_to_b(
+        optimal_action = construct_user_swap_a_to_b(
             pool_state=pool.liquidity_state,
             fee_algo=pool.fee_algorithm,
             amount_to_exchange_A=optimal_delta_x,
+            network_fee=network_fee,
         )
+        optimal_action_markout = optimal_action.get_user_markout(prices)
+
+        if optimal_action_markout < 0:
+            # This may happen when network fee is too high for any profitable swap
+            return None
+
+        return optimal_action
 
     def _get_optimal_a_to_b_swap_when_fee_known_before_trade(
         self,
@@ -109,7 +114,7 @@ class InformedUser(User):
         logging.debug(f"Optimal delta x: {optimal_delta_x}")
 
         if optimal_delta_x < 0:
-            # This may happen when fee is too high for any profitable swap
+            # This may happen when fee rate is too high for any profitable swap
             return None
 
         return optimal_delta_x
