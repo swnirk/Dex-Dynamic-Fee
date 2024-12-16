@@ -5,7 +5,6 @@ import logging
 from balance_change import BalanceChange
 from fee_algorithm.base import FeeAlgorithm
 
-
 @dataclass
 class UserAction:
     #  delta_x and delta_y are "user-side"
@@ -39,7 +38,6 @@ class UserAction:
 
     def inverse(self) -> "UserAction":
         return UserAction(self.delta_y, self.delta_x, self.fee_y, self.fee_x)
-
 
 def construct_user_swap_a_to_b(
     pool_state: PoolLiquidityState,
