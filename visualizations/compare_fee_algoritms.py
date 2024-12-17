@@ -1,9 +1,9 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
-from simulation.simulation import UserType, SimulationResult, ParticipantState
-from matplotlib.ticker import MaxNLocator
+from simulation.simulation import UserType, SimulationResult
 from experiments.experiment import ExperimentResult
 import pandas as pd
+from utility import fix_x_axis_labels
 
 
 def extract_user_markouts(
@@ -56,9 +56,7 @@ def plot_participants_markouts(
             label=f"LP ({experiment_name})",
         )
 
-    ax.xaxis.set_major_locator(
-        MaxNLocator(nbins=10)
-    )  # Set to show a maximum of 10 ticks
+    fix_x_axis_labels(ax)
 
     plt.xlabel("Time")
     plt.ylabel("Markout")
@@ -100,9 +98,7 @@ def plot_impermanent_loss(
             label=f"Impermanent Loss ({experiment_name})",
         )
 
-    ax.xaxis.set_major_locator(
-        MaxNLocator(nbins=10)
-    )  # Set to show a maximum of 10 ticks
+    fix_x_axis_labels(ax)
 
     plt.xlabel("Time")
     plt.ylabel("Impermanent Loss")
