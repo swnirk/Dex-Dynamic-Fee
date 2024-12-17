@@ -53,15 +53,17 @@ class ParticipantState:
 
 
 @dataclasses.dataclass
-class SimulationState:
+class SimulationStateSnapshot:
     user_states: dict[UserType, ParticipantState]
     lp_state: ParticipantState
     lp_with_just_hold_strategy: ParticipantState
+    prices: PricesSnapshot
+    pool: Pool
 
 
 @dataclasses.dataclass
 class SimulationResult:
-    snapshots: list[SimulationState] = dataclasses.field(default_factory=list)
+    snapshots: list[SimulationStateSnapshot] = dataclasses.field(default_factory=list)
     timestamps: list[pd.Timestamp] = dataclasses.field(default_factory=list)
 
 
@@ -81,6 +83,29 @@ class Simulation:
         self.network_fee = network_fee
         self.num_A_to_B_deals = 0
         self.num_B_to_A_deals = 0
+        self.user_states = {
+            UserType.INFORMED: ParticipantState(),
+            UserType.UNINFORMED: ParticipantState(),
+        }
+        self.lp_state = ParticipantState()
+        self.lp_with_just_hold_strategy = ParticipantState()
+
+    def _get_current_state_snapshot(
+        self, prices: PricesSnapshot
+    ) -> SimulationStateSnapshot:
+        return SimulationStateSnapshot(
+            user_states=deepcopy(self.user_states),
+            lp_state=deepcopy(self.lp_state),
+            lp_with_just_hold_strategy=deepcopy(self.lp_with_just_hold_strategy),
+            prices=deepcopy(prices),
+            pool=deepcopy(self.pool),
+        )
+
+    def _update_all_valuations(self, prices: PricesSnapshot):
+        for user_state in self.user_states.values():
+            user_state.update_valuation(prices)
+        self.lp_state.update_valuation(prices)
+        self.lp_with_just_hold_strategy.update_valuation(prices)
 
     def simulate(
         self,
@@ -105,34 +130,23 @@ class Simulation:
             Column "price_B" contains "fair" prices of asset B
             Column "time" contains the time moments
         """
-        result = SimulationResult()
+        snapshots = []
+        timestamps = []
+
+        self.lp_state.position = Position(
+            position_a=self.pool.liquidity_state.quantity_a,
+            position_b=self.pool.liquidity_state.quantity_b,
+        )
+
+        self.lp_with_just_hold_strategy.position = deepcopy(self.lp_state.position)
 
         initial_prices_snapshot = self._get_prices_snapshot(prices.iloc[0])
 
-        # TODO: we suppose that we have only one LP -- this is very unrealistic assumption
-        initial_lp_state = ParticipantState(
-            total_markout=0,
-            position=Position(
-                position_a=self.pool.liquidity_state.quantity_a,
-                position_b=self.pool.liquidity_state.quantity_b,
-            ),
-        )
-        self.current_state = SimulationState(
-            user_states={
-                UserType.INFORMED: ParticipantState(),
-                UserType.UNINFORMED: ParticipantState(),
-            },
-            lp_state=initial_lp_state,
-            lp_with_just_hold_strategy=deepcopy(initial_lp_state),
-        )
-
-        self.current_state.lp_state.update_valuation(initial_prices_snapshot)
+        self._update_all_valuations(initial_prices_snapshot)
 
         self.pool.fee_algorithm.process_initial_pool_state(self.pool.liquidity_state)
 
         for _, row in prices.iterrows():
-            self.current_state = deepcopy(self.current_state)
-
             prices_snapshot = self._get_prices_snapshot(row)
 
             self.pool.process_oracle_price(
@@ -147,23 +161,14 @@ class Simulation:
 
             self.process_deal(UserType.INFORMED, informed_user, prices_snapshot)
 
-            self.current_state.lp_state.update_valuation(prices_snapshot)
-            self.current_state.lp_with_just_hold_strategy.update_valuation(
-                prices_snapshot
-            )
-            self.current_state.user_states[UserType.INFORMED].update_valuation(
-                prices_snapshot
-            )
-            self.current_state.user_states[UserType.UNINFORMED].update_valuation(
-                prices_snapshot
-            )
-
-            result.snapshots.append(self.current_state)
-            result.timestamps.append(row["time"])
+            self._update_all_valuations(prices_snapshot)
 
             self.pool.fee_algorithm.process_block_end(self.pool.liquidity_state)
 
-        return result
+            snapshots.append(self._get_current_state_snapshot(prices_snapshot))
+            timestamps.append(row["time"])
+
+        return SimulationResult(snapshots=snapshots, timestamps=timestamps)
 
     def process_deal(
         self,
@@ -187,12 +192,12 @@ class Simulation:
 
         self.pool.process_trade(user_action.get_pool_balance_change())
 
-        self.current_state.user_states[user_type].process_trade(
+        self.user_states[user_type].process_trade(
             user_action.get_user_balance_change(),
             user_action.get_user_markout(prices),
         )
 
-        self.current_state.lp_state.process_trade(
+        self.lp_state.process_trade(
             user_action.get_lp_balance_change(),
             user_action.get_lp_markout(prices),
         )
