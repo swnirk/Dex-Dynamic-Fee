@@ -6,7 +6,7 @@ from typing import Optional
 
 
 @dataclass
-class UnequalFee(FeeKnownBeforeTradeAlgorithm):
+class DiscreteFeePerfectOracle(FeeKnownBeforeTradeAlgorithm):
     fee_rate_in_arbitrage_direction: float
     fee_rate_in_non_arbitrage_direction: float
 
@@ -31,8 +31,8 @@ class UnequalFee(FeeKnownBeforeTradeAlgorithm):
     def process_block_end(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def inverse(self) -> "UnequalFee":
-        return UnequalFee(
+    def inverse(self) -> "DiscreteFeePerfectOracle":
+        return DiscreteFeePerfectOracle(
             fee_rate_in_arbitrage_direction=self.fee_rate_in_arbitrage_direction,
             fee_rate_in_non_arbitrage_direction=self.fee_rate_in_non_arbitrage_direction,
             oracle_a_to_b_price=(

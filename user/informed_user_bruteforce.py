@@ -5,7 +5,6 @@ from user.abstract_user import (
 )
 from user_action import construct_user_swap_a_to_b
 from typing import Optional
-import logging
 from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
 from user_action import construct_user_swap_b_to_a

@@ -3,7 +3,7 @@ from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
 from pool.pool import Pool, PoolLiquidityState
 from fee_algorithm.fixed_fee import FixedFee
-from fee_algorithm.fee_based_on_trade import FeeBasedOnTrade
+from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
 from prices_snapshot import PricesSnapshot
 import dataclasses
 
@@ -19,18 +19,20 @@ class PoolSnapshot:
         self.pool.process_oracle_price(self.prices.get_a_to_b_price())
 
 
+_FEE_RATES = [0.01, 0.1, 0.9]
+
 _FEE_ALGORITHMS = [
     *[
         FixedFee(
             exchange_fee_rate=alpha,
         )
-        for alpha in [0.01, 0.1, 0.9]
+        for alpha in _FEE_RATES
     ],
     *[
-        FeeBasedOnTrade(
+        ContinuousFeePerfectOracle(
             default_fee_rate=alpha,
         )
-        for alpha in [0.01, 0.1, 0.9]
+        for alpha in _FEE_RATES
     ],
 ]
 

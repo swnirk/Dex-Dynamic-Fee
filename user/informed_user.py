@@ -10,7 +10,7 @@ from pool.pool import Pool
 from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
 from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
-from fee_algorithm.fee_based_on_trade import FeeBasedOnTrade
+from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
 
 
 class InformedUser(User):
@@ -63,13 +63,15 @@ class InformedUser(User):
                     pool_state=pool.liquidity_state
                 ),
             )
-        elif isinstance(pool.fee_algorithm, FeeBasedOnTrade):
+        elif isinstance(pool.fee_algorithm, ContinuousFeePerfectOracle):
             assert pool.fee_algorithm.oracle_a_to_b_price is not None
-            optimal_delta_x = self._get_optimal_a_to_b_swap_fee_based_on_trade(
-                pool.liquidity_state,
-                prices,
-                pool.fee_algorithm.default_fee_rate,
-                pool.fee_algorithm.oracle_a_to_b_price,
+            optimal_delta_x = (
+                self._get_optimal_a_to_b_swap_continuous_fee_with_perfect_oracle(
+                    pool.liquidity_state,
+                    prices,
+                    pool.fee_algorithm.default_fee_rate,
+                    pool.fee_algorithm.oracle_a_to_b_price,
+                )
             )
         else:
             raise NotImplementedError(
@@ -119,7 +121,7 @@ class InformedUser(User):
 
         return optimal_delta_x
 
-    def _get_optimal_a_to_b_swap_fee_based_on_trade(
+    def _get_optimal_a_to_b_swap_continuous_fee_with_perfect_oracle(
         self,
         liquidity_state: PoolLiquidityState,
         prices: PricesSnapshot,

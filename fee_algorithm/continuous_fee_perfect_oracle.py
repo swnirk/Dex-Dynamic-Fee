@@ -6,7 +6,7 @@ from fee_algorithm.base import FeeAlgorithm
 
 
 @dataclass
-class FeeBasedOnTrade(FeeAlgorithm):
+class ContinuousFeePerfectOracle(FeeAlgorithm):
     default_fee_rate: float
     oracle_a_to_b_price: Optional[float] = None
 
@@ -45,8 +45,8 @@ class FeeBasedOnTrade(FeeAlgorithm):
     def process_block_end(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def inverse(self) -> "FeeBasedOnTrade":
-        return FeeBasedOnTrade(
+    def inverse(self) -> "ContinuousFeePerfectOracle":
+        return ContinuousFeePerfectOracle(
             default_fee_rate=self.default_fee_rate,
             oracle_a_to_b_price=(
                 1 / self.oracle_a_to_b_price

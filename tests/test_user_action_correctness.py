@@ -1,8 +1,7 @@
 import pytest
 
 from pool.pool import Pool, PoolLiquidityState
-from fee_algorithm.fixed_fee import FixedFee
-from fee_algorithm.fee_based_on_trade import FeeBasedOnTrade
+from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
 from user.informed_user import InformedUser
 from user.uninformed_user import UninformedUser
 from user.abstract_user import UserAction
