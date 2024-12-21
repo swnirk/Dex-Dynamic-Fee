@@ -7,6 +7,7 @@ from user_action import construct_user_swap_a_to_b
 from typing import Optional
 from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
+from common import capital_function
 
 
 class UninformedUser(User):
@@ -63,4 +64,17 @@ class UninformedUser(User):
             network_fee=network_fee,
         )
 
-        return action
+        user_balance_change = action.get_user_balance_change()
+        user_profit = capital_function(user_balance_change.delta_x, user_balance_change.delta_y, prices)
+        total_change = capital_function(abs(user_balance_change.delta_x), abs(user_balance_change.delta_y), prices)
+        r = user_profit / total_change
+        if r > 0:
+            return action
+        else:
+            trade_probability = np.exp(-abs(r))
+            random_value = np.random.rand()
+
+            if random_value < trade_probability:
+                return action
+            else:
+                return None

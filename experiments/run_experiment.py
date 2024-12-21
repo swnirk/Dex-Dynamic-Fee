@@ -16,7 +16,8 @@ def run_experiment(
     experiment_data = get_experiment_data(data_root, experiment.data)
 
     initial_quantity_A, initial_quantity_B = get_initial_pool_sizes(
-        experiment_data["price_A"].iloc[0], experiment_data["price_B"].iloc[0], 100000
+        # experiment_data["price_A"].iloc[0], experiment_data["price_B"].iloc[0], 100000
+        experiment_data["price_A"].iloc[0], experiment_data["price_B"].iloc[0], 6e+24 # in USDT
     )
 
     pool = Pool(
