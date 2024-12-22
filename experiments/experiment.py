@@ -13,7 +13,7 @@ class ExperimentData:
     end_time: datetime
 
     A_symbol: str = "ETH"
-    B_symbol: str = "BTC"
+    B_symbol: str = "SHIB"
     stable_coin_symbol: str = "USDT"
 
     candle_interval: str = "5m"

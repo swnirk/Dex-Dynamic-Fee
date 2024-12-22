@@ -47,7 +47,9 @@ class UninformedUser(User):
         prices: PricesSnapshot,
         network_fee: float,
     ) -> Optional[UserAction]:
-        mu = 0.00005
+        # mu = 0.00005
+        mu = 0.00016
+        # sigma = 0.00001
         sigma = 0.00001
         share = np.random.normal(mu, sigma)
 
