@@ -55,6 +55,8 @@ POOL_SNAPSHOTS_TO_TEST = [
         (10000, 10000),
         (100, 1),
         (1, 100),
+        (10800.139815279343, 1325104137235.116),
+        (1325104137235.116, 10800.139815279343),
     ]
     for network_fee in [0, 0.1, 1000]
     for prices in [
@@ -63,5 +65,7 @@ POOL_SNAPSHOTS_TO_TEST = [
         PricesSnapshot(1, 1),
         PricesSnapshot(100, 1),
         PricesSnapshot(1, 100),
+        PricesSnapshot(1215.89, 9.91e-6),
+        PricesSnapshot(9.91e-6, 1215.89),
     ]
 ]

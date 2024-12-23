@@ -11,8 +11,11 @@ from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
 from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
 from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
+from numpy import isclose
+from dataclasses import dataclass
 
 
+@dataclass
 class InformedUser(User):
     def get_user_action(
         self,
@@ -24,7 +27,9 @@ class InformedUser(User):
 
         action: Optional[UserAction] = None
 
-        if pool.get_a_to_b_exchange_price() > q:
+        if isclose(pool.get_a_to_b_exchange_price(), q, rtol=1e-9):
+            return None
+        elif pool.get_a_to_b_exchange_price() > q:
             logging.debug("Users swaps A -> B")
             action = self._get_optimal_a_to_b_swap(
                 pool,
@@ -41,7 +46,7 @@ class InformedUser(User):
             if action is not None:
                 action = action.inverse()
         else:
-            return None
+            assert False
 
         logging.debug(f"User action: {action}")
 
@@ -108,7 +113,6 @@ class InformedUser(User):
         beta = 1 - fee
 
         assert liquidity_state.get_a_to_b_exchange_price() > q
-
         # In terms of "pool" balance;
         # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
         optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta

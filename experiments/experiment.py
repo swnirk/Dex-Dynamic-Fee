@@ -35,8 +35,7 @@ class Experiment:
     informed_user: User
     uninformed_users: UninformedUsersConfig
 
-    # TODO: parameterize by total pool value (in stable coin)
-    total_tokens: int = 100000
+    initial_pool_value: int = 26263564  # in stable coin
 
     network_fee: float = 5  # in stable coin
 

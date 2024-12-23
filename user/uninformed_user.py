@@ -8,9 +8,14 @@ from typing import Optional
 from pool.pool import Pool
 from prices_snapshot import PricesSnapshot
 from common import capital_function
+from dataclasses import dataclass
 
 
+@dataclass
 class UninformedUser(User):
+    mu: float = 0.00016
+    sigma: float = 0.00001
+
     def get_user_action(
         self,
         pool: Pool,
@@ -47,11 +52,7 @@ class UninformedUser(User):
         prices: PricesSnapshot,
         network_fee: float,
     ) -> Optional[UserAction]:
-        # mu = 0.00005
-        mu = 0.00016
-        # sigma = 0.00001
-        sigma = 0.00001
-        share = np.random.normal(mu, sigma)
+        share = np.random.normal(self.mu, self.sigma)
 
         # "Pool" side;
         delta_x = share * pool.liquidity_state.quantity_a
@@ -67,8 +68,12 @@ class UninformedUser(User):
         )
 
         user_balance_change = action.get_user_balance_change()
-        user_profit = capital_function(user_balance_change.delta_x, user_balance_change.delta_y, prices)
-        total_change = capital_function(abs(user_balance_change.delta_x), abs(user_balance_change.delta_y), prices)
+        user_profit = capital_function(
+            user_balance_change.delta_x, user_balance_change.delta_y, prices
+        )
+        total_change = capital_function(
+            abs(user_balance_change.delta_x), abs(user_balance_change.delta_y), prices
+        )
         r = user_profit / total_change
         if r > 0:
             return action
