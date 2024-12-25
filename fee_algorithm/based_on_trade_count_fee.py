@@ -13,9 +13,9 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
     a_to_b_trade_count: int = 0
     b_to_a_trade_count: int = 0
 
-    fee_step: float = 0.0001
+    fee_step: float = 0.0001  # 1 bps
 
-    def get_a_to_b_exchange_fee_rate(self, _: PoolLiquidityState) -> float:
+    def get_a_to_b_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.a_to_b_exchange_fee_rate
 
     def process_oracle_price(self, a_to_b_price: float) -> None:
