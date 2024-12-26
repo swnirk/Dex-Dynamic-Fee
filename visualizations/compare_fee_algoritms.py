@@ -72,7 +72,7 @@ def extract_impermanent_loss(simulation_result: SimulationResult) -> list:
     res = []
     for snapshot in simulation_result.snapshots:
         res.append(
-            snapshot.lp_state.valuation - snapshot.lp_with_just_hold_strategy.valuation
+            snapshot.lp_with_just_hold_strategy.valuation - snapshot.lp_state.valuation
         )
     return res
 
@@ -131,8 +131,7 @@ def get_experiment_summary(
                 .user_states[UserType.UNINFORMED]
                 .total_markout,
                 "lp_markout": simulation_result.snapshots[-1].lp_state.total_markout,
-                "impermanent_loss": simulation_result.snapshots[-1].lp_state.valuation
-                - simulation_result.snapshots[-1].lp_with_just_hold_strategy.valuation,
+                "impermanent_loss": extract_impermanent_loss(simulation_result)[-1],
             }
         )
     df = pd.DataFrame(res)
