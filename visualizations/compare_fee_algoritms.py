@@ -45,6 +45,7 @@ def plot_participants_markouts(
                 y=extract_user_markouts(simulation_result, user_type),
                 ax=ax,
                 label=f"{user_type_str} ({experiment_name})",
+                
             )
 
     for experiment_name, experiment_result in results.items():

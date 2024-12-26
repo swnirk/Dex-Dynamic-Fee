@@ -46,12 +46,22 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
             self.b_to_a_trade_count += 1
 
         delta = self.a_to_b_trade_count - self.b_to_a_trade_count
-        if abs(delta) > 5:
-            if delta > 0 and self.b_to_a_exchange_fee_rate >= self.fee_step:
-                self.a_to_b_exchange_fee_rate += self.fee_step
+        # if abs(delta) > 5:
+        #     if delta > 0 and self.b_to_a_exchange_fee_rate >= self.fee_step:
+        #         self.a_to_b_exchange_fee_rate += self.fee_step
+        #         self.b_to_a_exchange_fee_rate -= self.fee_step
+        #     elif delta < 0 and self.a_to_b_exchange_fee_rate >= self.fee_step:
+        #         self.b_to_a_exchange_fee_rate += self.fee_step
+        #         self.a_to_b_exchange_fee_rate -= self.fee_step
+
+        # if delta > 0 and self.a_to_b_exchange_fee_rate < 0.20:
+        if delta_a < 0 and self.a_to_b_exchange_fee_rate < 0.20:
+            self.a_to_b_exchange_fee_rate += self.fee_step
+            if self.b_to_a_exchange_fee_rate > self.fee_step:
                 self.b_to_a_exchange_fee_rate -= self.fee_step
-            elif delta < 0 and self.a_to_b_exchange_fee_rate >= self.fee_step:
-                self.b_to_a_exchange_fee_rate += self.fee_step
+        elif delta_b < 0 and self.b_to_a_exchange_fee_rate < 0.20:
+            self.b_to_a_exchange_fee_rate += self.fee_step
+            if self.a_to_b_exchange_fee_rate > self.fee_step:
                 self.a_to_b_exchange_fee_rate -= self.fee_step
 
         logging.info(
