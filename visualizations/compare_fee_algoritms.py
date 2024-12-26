@@ -45,7 +45,6 @@ def plot_participants_markouts(
                 y=extract_user_markouts(simulation_result, user_type),
                 ax=ax,
                 label=f"{user_type_str} ({experiment_name})",
-                
             )
 
     for experiment_name, experiment_result in results.items():
@@ -136,4 +135,5 @@ def get_experiment_summary(
                 - simulation_result.snapshots[-1].lp_with_just_hold_strategy.valuation,
             }
         )
-    return pd.DataFrame(res)
+    df = pd.DataFrame(res)
+    return df.round(2)
