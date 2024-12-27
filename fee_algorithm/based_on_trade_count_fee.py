@@ -43,14 +43,14 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
         if delta_a < 0:
             new_a_b_fee = self.a_to_b_exchange_fee_rate + self.fee_step
             new_b_a_fee = self.b_to_a_exchange_fee_rate - self.fee_step
-            if (new_a_b_fee+new_b_a_fee)/2 <= 0.004:
+            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
                 self.a_to_b_exchange_fee_rate += self.fee_step
                 if self.b_to_a_exchange_fee_rate > self.fee_step:
                     self.b_to_a_exchange_fee_rate -= self.fee_step
         elif delta_b < 0:
             new_a_b_fee = self.a_to_b_exchange_fee_rate - self.fee_step
             new_b_a_fee = self.b_to_a_exchange_fee_rate + self.fee_step
-            if (new_a_b_fee+new_b_a_fee)/2 <= 0.004:
+            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
                 self.b_to_a_exchange_fee_rate += self.fee_step
                 if self.a_to_b_exchange_fee_rate > self.fee_step:
                     self.a_to_b_exchange_fee_rate -= self.fee_step
