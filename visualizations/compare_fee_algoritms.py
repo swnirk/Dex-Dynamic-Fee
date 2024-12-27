@@ -121,15 +121,15 @@ def get_experiment_summary(
     res = []
     for experiment_name, experiment_result in results.items():
         simulation_result = experiment_result.simulation_result
+        last_iu_state = simulation_result.snapshots[-1].user_states[UserType.INFORMED]
+        last_uu_state = simulation_result.snapshots[-1].user_states[UserType.UNINFORMED]
         res.append(
             {
                 "experiment_name": experiment_name,
-                "informed_user_markout": simulation_result.snapshots[-1]
-                .user_states[UserType.INFORMED]
-                .total_markout,
-                "uninformed_user_markout": simulation_result.snapshots[-1]
-                .user_states[UserType.UNINFORMED]
-                .total_markout,
+                "iu_markout": last_iu_state.total_markout,
+                "iu_trade_count": last_iu_state.trades_count,
+                "uu_markout": last_uu_state.total_markout,
+                "uu_trade_count": last_uu_state.trades_count,
                 "lp_markout": simulation_result.snapshots[-1].lp_state.total_markout,
                 "impermanent_loss": extract_impermanent_loss(simulation_result)[-1],
             }

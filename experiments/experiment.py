@@ -16,7 +16,7 @@ class ExperimentData:
     B_symbol: str = "SHIB"
     stable_coin_symbol: str = "USDT"
 
-    candle_interval: str = "5m"
+    candle_interval: str = "1m"
 
 
 @dataclass
@@ -35,7 +35,7 @@ class Experiment:
     informed_user: User
     uninformed_users: UninformedUsersConfig
 
-    initial_pool_value: int = 26263564  # in stable coin
+    initial_pool_value: int = 25 * 1000000  # in stable coin
 
     network_fee: float = 5  # in stable coin
 
