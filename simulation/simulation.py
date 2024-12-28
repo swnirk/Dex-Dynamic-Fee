@@ -33,6 +33,7 @@ class Position:
 @dataclasses.dataclass
 class ParticipantState:
     total_markout: float = 0
+    trades_count: int = 0
     position: Position = dataclasses.field(
         default_factory=lambda: Position(position_a=0, position_b=0)
     )
@@ -48,6 +49,7 @@ class ParticipantState:
         balance_change: BalanceChange,
         deal_markout: float,
     ):
+        self.trades_count += 1
         self.total_markout += deal_markout
         self.position.process_trade(balance_change.delta_x, balance_change.delta_y)
 
