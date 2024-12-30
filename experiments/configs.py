@@ -1,21 +1,21 @@
-from experiments.experiment import ExperimentData, UninformedUsersConfig
+from experiments.experiment import HistoricalDataDescription, UninformedUsersConfig
 from datetime import datetime
 from user.uninformed_user import UninformedUser
 
 DATA_SOURCE_BY_ALIAS = {
-    "volatile_market": ExperimentData(
+    "volatile_market": HistoricalDataDescription(
         start_time=datetime(2024, 3, 1, 12, 0, 0),
         end_time=datetime(2024, 3, 31, 12, 0, 0),
     ),
-    "calm_market": ExperimentData(
+    "calm_market": HistoricalDataDescription(
         start_time=datetime(2024, 8, 1, 12, 0, 0),
         end_time=datetime(2024, 8, 31, 12, 0, 0),
     ),
-    "bull_market": ExperimentData(
+    "bull_market": HistoricalDataDescription(
         start_time=datetime(2024, 11, 1, 12, 0, 0),
         end_time=datetime(2024, 11, 30, 12, 0, 0),
     ),
-    "bear_market": ExperimentData(
+    "bear_market": HistoricalDataDescription(
         start_time=datetime(2024, 4, 1, 12, 0, 0),
         end_time=datetime(2024, 4, 30, 12, 0, 0),
     ),

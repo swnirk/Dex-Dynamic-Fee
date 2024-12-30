@@ -5,10 +5,12 @@ from user.abstract_user import User
 from datetime import datetime
 import pandas as pd
 from simulation.simulation import SimulationResult
+import numpy as np
+from typing import Union
 
 
 @dataclass
-class ExperimentData:
+class HistoricalDataDescription:
     start_time: datetime
     end_time: datetime
 
@@ -20,6 +22,31 @@ class ExperimentData:
 
 
 @dataclass
+class GBMParameters:
+    """
+    A dataclass to store parameters of a Geometric Brownian Motion (GBM).
+    """
+
+    S0: list[float]  # Initial prices
+    mu: list[float]  # Drift (mean return)
+    cov_matrix: np.ndarray  # Covariance matrix of log returns
+
+
+@dataclass
+class SyntheticDataDescription:
+    gbm_parameters: GBMParameters
+
+    start_time: datetime
+    end_time: datetime
+    candle_interval: str = (
+        "1min"  # Slightly different notation because of Binance API peculiarities
+    )
+
+
+InputDataDescription = Union[HistoricalDataDescription, SyntheticDataDescription]
+
+
+@dataclass
 class UninformedUsersConfig:
     uninformed_user: User
     probability_of_trade: float
@@ -28,7 +55,7 @@ class UninformedUsersConfig:
 
 @dataclass
 class Experiment:
-    data: ExperimentData
+    data: InputDataDescription
 
     fee_algorithm: FeeAlgorithm
 

@@ -1,10 +1,16 @@
-from experiments.data import get_experiment_data
+import pandas as pd
+
+from experiments.experiment import HistoricalDataDescription, SyntheticDataDescription
+from experiments.historical_data import get_experiment_historical_data
+from experiments.synthetic_data import generate_synthetic_data
 from experiments.experiment import Experiment
+from experiments.experiment import InputDataDescription
 from pathlib import Path
 from pool.pool import Pool
 from pool.liquidity_state import PoolLiquidityState
 from simulation.simulation import Simulation
 from experiments.experiment import ExperimentResult
+import numpy as np
 
 DATA_ROOT = Path("data")
 
@@ -30,10 +36,24 @@ def get_initial_pool_state(
     )
 
 
+def get_experiment_data(
+    description: InputDataDescription, data_root: Path = DATA_ROOT
+) -> pd.DataFrame:
+    if isinstance(description, HistoricalDataDescription):
+        return get_experiment_historical_data(data_root, description)
+    elif isinstance(description, SyntheticDataDescription):
+        return generate_synthetic_data(description)
+    else:
+        raise ValueError(f"Unsupported data description: {description}")
+
+
 def run_experiment(
-    experiment: Experiment, data_root: Path = DATA_ROOT
+    experiment: Experiment,
+    random_seed: int = 0,
+    data_root: Path = DATA_ROOT,
 ) -> ExperimentResult:
-    experiment_data = get_experiment_data(data_root, experiment.data)
+    np.random.seed(random_seed)
+    experiment_data = get_experiment_data(experiment.data, data_root)
 
     initial_pool_state = get_initial_pool_state(
         experiment_data["price_A"].iloc[0],
@@ -65,3 +85,11 @@ def run_experiment(
         pool=pool,
         simulation_result=simulation_result,
     )
+
+
+def run_seeded_experiment(
+    experiment: Experiment,
+    random_seeds: list[int],
+    data_root: Path = DATA_ROOT,
+) -> list[ExperimentResult]:
+    return [run_experiment(experiment, seed, data_root) for seed in random_seeds]
