@@ -22,6 +22,37 @@ def extract_lp_markouts(simulation_result: SimulationResult) -> list:
     return res
 
 
+def _plot_markouts_chart(
+    markouts: dict[str, list[float]],
+    timestamps: list[pd.Timestamp],
+    user_type_name: str,
+    period_alias: str,
+):
+    """
+    Plot markouts chart
+
+    markouts: dict[str, list[float]]
+        keys -- descriptions (will be used as labels)
+        values -- markouts
+    """
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for description, single_case_markouts in markouts.items():
+        sns.lineplot(x=timestamps, y=single_case_markouts, ax=ax, label=description)
+
+    fix_x_axis_labels(ax)
+
+    plt.xlabel("Time")
+    plt.ylabel("Markout")
+
+    plt.xticks(rotation=45)
+    plt.title(f"{user_type_name} markouts over time, {period_alias}")
+    plt.tight_layout()
+
+    plt.show()
+
+
 def plot_participants_markouts(
     period_alias: str,
     results: dict[str, ExperimentResult],
@@ -32,41 +63,33 @@ def plot_participants_markouts(
         values -- ExperimentResult
     """
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    timestamps = list(results.values())[0].simulation_result.timestamps
 
-    for user_type in UserType:
-        for experiment_name, experiment_result in results.items():
-            simulation_result = experiment_result.simulation_result
-            user_type_str = (
-                "Informed" if user_type == UserType.INFORMED else "Uninformed"
+    # We don't need to plot uninformed users markouts charts as they are almost always trivial
+
+    _plot_markouts_chart(
+        markouts={
+            f"{experiment_name}": extract_user_markouts(
+                experiment_result.simulation_result, UserType.INFORMED
             )
-            sns.lineplot(
-                x=simulation_result.timestamps,
-                y=extract_user_markouts(simulation_result, user_type),
-                ax=ax,
-                label=f"{user_type_str} ({experiment_name})",
-                
+            for experiment_name, experiment_result in results.items()
+        },
+        timestamps=timestamps,
+        user_type_name="IU",
+        period_alias=period_alias,
+    )
+
+    _plot_markouts_chart(
+        markouts={
+            f"{experiment_name}": extract_lp_markouts(
+                experiment_result.simulation_result
             )
-
-    for experiment_name, experiment_result in results.items():
-        simulation_result = experiment_result.simulation_result
-        sns.lineplot(
-            x=simulation_result.timestamps,
-            y=extract_lp_markouts(simulation_result),
-            ax=ax,
-            label=f"LP ({experiment_name})",
-        )
-
-    fix_x_axis_labels(ax)
-
-    plt.xlabel("Time")
-    plt.ylabel("Markout")
-
-    plt.xticks(rotation=45)
-    plt.title(f"Markouts over time, {period_alias}")
-    plt.tight_layout()
-
-    plt.show()
+            for experiment_name, experiment_result in results.items()
+        },
+        timestamps=timestamps,
+        user_type_name="LP",
+        period_alias=period_alias,
+    )
 
 
 def extract_impermanent_loss(simulation_result: SimulationResult) -> list:
