@@ -41,28 +41,33 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
         delta_b = pool_balance_change.delta_y
 
         if delta_a < 0:
-            self.a_to_b_trade_count += 1
+            new_a_b_fee = self.a_to_b_exchange_fee_rate + self.fee_step
+            new_b_a_fee = self.b_to_a_exchange_fee_rate - self.fee_step
+            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
+                self.a_to_b_exchange_fee_rate += self.fee_step
+                if self.b_to_a_exchange_fee_rate > self.fee_step:
+                    self.b_to_a_exchange_fee_rate -= self.fee_step
+            else:
+                new_a_b_fee = self.a_to_b_exchange_fee_rate + self.fee_step/2
+                new_b_a_fee = self.b_to_a_exchange_fee_rate - self.fee_step/2
+                if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
+                    self.a_to_b_exchange_fee_rate += self.fee_step/2
+                    if self.b_to_a_exchange_fee_rate > self.fee_step/2:
+                        self.b_to_a_exchange_fee_rate -= self.fee_step/2
         elif delta_b < 0:
-            self.b_to_a_trade_count += 1
-
-        delta = self.a_to_b_trade_count - self.b_to_a_trade_count
-        # if abs(delta) > 5:
-        #     if delta > 0 and self.b_to_a_exchange_fee_rate >= self.fee_step:
-        #         self.a_to_b_exchange_fee_rate += self.fee_step
-        #         self.b_to_a_exchange_fee_rate -= self.fee_step
-        #     elif delta < 0 and self.a_to_b_exchange_fee_rate >= self.fee_step:
-        #         self.b_to_a_exchange_fee_rate += self.fee_step
-        #         self.a_to_b_exchange_fee_rate -= self.fee_step
-
-        # if delta > 0 and self.a_to_b_exchange_fee_rate < 0.20:
-        if delta_a < 0 and self.a_to_b_exchange_fee_rate < 0.20:
-            self.a_to_b_exchange_fee_rate += self.fee_step
-            if self.b_to_a_exchange_fee_rate > self.fee_step:
-                self.b_to_a_exchange_fee_rate -= self.fee_step
-        elif delta_b < 0 and self.b_to_a_exchange_fee_rate < 0.20:
-            self.b_to_a_exchange_fee_rate += self.fee_step
-            if self.a_to_b_exchange_fee_rate > self.fee_step:
-                self.a_to_b_exchange_fee_rate -= self.fee_step
+            new_a_b_fee = self.a_to_b_exchange_fee_rate - self.fee_step
+            new_b_a_fee = self.b_to_a_exchange_fee_rate + self.fee_step
+            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
+                self.b_to_a_exchange_fee_rate += self.fee_step
+                if self.a_to_b_exchange_fee_rate > self.fee_step:
+                    self.a_to_b_exchange_fee_rate -= self.fee_step
+            else:
+                new_a_b_fee = self.a_to_b_exchange_fee_rate - self.fee_step/2
+                new_b_a_fee = self.b_to_a_exchange_fee_rate + self.fee_step/2
+                if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
+                    self.b_to_a_exchange_fee_rate += self.fee_step
+                    if self.a_to_b_exchange_fee_rate > self.fee_step:
+                        self.a_to_b_exchange_fee_rate -= self.fee_step
 
         logging.info(
             f"Updated fees: a_to_b_exchange_fee_rate={self.a_to_b_exchange_fee_rate}, b_to_a_exchange_fee_rate={self.b_to_a_exchange_fee_rate}, "
