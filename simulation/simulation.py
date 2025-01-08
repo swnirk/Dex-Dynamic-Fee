@@ -116,6 +116,7 @@ class Simulation:
         informed_user: User,
         uninformed_user: User,
         prices: pd.DataFrame,
+        return_intermediate_results: bool = True,
     ) -> SimulationResult:
         """
         Simulate the trading process.
@@ -148,7 +149,7 @@ class Simulation:
 
         self.pool.fee_algorithm.process_initial_pool_state(self.pool.liquidity_state)
 
-        for _, row in prices.iterrows():
+        for index, (_, row) in enumerate(prices.iterrows()):
             prices_snapshot = self._get_prices_snapshot(row)
 
             self.pool.process_oracle_price(
@@ -167,8 +168,9 @@ class Simulation:
 
             self.pool.fee_algorithm.process_block_end(self.pool.liquidity_state)
 
-            snapshots.append(self._get_current_state_snapshot(prices_snapshot))
-            timestamps.append(row["time"])
+            if (return_intermediate_results) or index == len(prices) - 1:
+                snapshots.append(self._get_current_state_snapshot(prices_snapshot))
+                timestamps.append(row["time"])
 
         return SimulationResult(snapshots=snapshots, timestamps=timestamps)
 
