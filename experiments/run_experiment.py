@@ -49,11 +49,10 @@ def get_experiment_data(
 
 def run_experiment(
     experiment: Experiment,
-    random_seed: int = 0,
     data_root: Path = DATA_ROOT,
     return_intermediate_results: bool = True,
 ) -> ExperimentResult:
-    np.random.seed(random_seed)
+    np.random.seed(experiment.random_seed)
     experiment_data = get_experiment_data(experiment.data, data_root)
 
     initial_pool_state = get_initial_pool_state(
@@ -87,15 +86,3 @@ def run_experiment(
         pool=pool,
         simulation_result=simulation_result,
     )
-
-
-def run_seeded_experiment(
-    experiment: Experiment,
-    random_seeds: list[int],
-    data_root: Path = DATA_ROOT,
-    return_intermediate_results: bool = False,
-) -> list[ExperimentResult]:
-    return [
-        run_experiment(experiment, seed, data_root, return_intermediate_results)
-        for seed in random_seeds
-    ]

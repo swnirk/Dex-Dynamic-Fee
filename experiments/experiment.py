@@ -66,6 +66,8 @@ class Experiment:
 
     network_fee: float = 5  # in stable coin
 
+    random_seed: int = 0
+
 
 @dataclass
 class ExperimentResult:

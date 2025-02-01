@@ -1,7 +1,11 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 from simulation.simulation import UserType, SimulationResult
-from experiments.experiment import ExperimentResult
+from experiments.experiment import Experiment, ExperimentResult
+from experiments.run_multiple_experiments import (
+    ExperimentDescriptionT,
+    convert_experiment_key_to_dict,
+)
 import pandas as pd
 from utility import fix_x_axis_labels
 
@@ -134,7 +138,21 @@ def plot_impermanent_loss(
     plt.show()
 
 
-def get_experiment_summary(
+def get_single_experiment_summary(experiment_result: ExperimentResult) -> dict:
+    simulation_result = experiment_result.simulation_result
+    last_iu_state = simulation_result.snapshots[-1].user_states[UserType.INFORMED]
+    last_uu_state = simulation_result.snapshots[-1].user_states[UserType.UNINFORMED]
+    return {
+        "iu_markout": last_iu_state.total_markout,
+        "iu_trade_count": last_iu_state.trades_count,
+        "uu_markout": last_uu_state.total_markout,
+        "uu_trade_count": last_uu_state.trades_count,
+        "lp_markout": simulation_result.snapshots[-1].lp_state.total_markout,
+        "impermanent_loss": extract_impermanent_loss(simulation_result)[-1],
+    }
+
+
+def get_experiments_summary_by_alias(
     results: dict[str, ExperimentResult],
 ) -> pd.DataFrame:
     """
@@ -144,19 +162,30 @@ def get_experiment_summary(
     """
     res = []
     for experiment_name, experiment_result in results.items():
-        simulation_result = experiment_result.simulation_result
-        last_iu_state = simulation_result.snapshots[-1].user_states[UserType.INFORMED]
-        last_uu_state = simulation_result.snapshots[-1].user_states[UserType.UNINFORMED]
         res.append(
-            {
-                "experiment_name": experiment_name,
-                "iu_markout": last_iu_state.total_markout,
-                "iu_trade_count": last_iu_state.trades_count,
-                "uu_markout": last_uu_state.total_markout,
-                "uu_trade_count": last_uu_state.trades_count,
-                "lp_markout": simulation_result.snapshots[-1].lp_state.total_markout,
-                "impermanent_loss": extract_impermanent_loss(simulation_result)[-1],
-            }
+            {"experiment_name": experiment_name}
+            | get_single_experiment_summary(experiment_result)
         )
     df = pd.DataFrame(res)
     return df.round(2)
+
+
+def get_experiments_summary_by_description(
+    experiments_results: dict[ExperimentDescriptionT, ExperimentResult],
+) -> pd.DataFrame:
+    """
+    Get a summary of the experiments.
+
+    Args:
+        experiments (dict[str, Experiment]): A dictionary of experiments.
+        experiments_results (dict[str, ExperimentResult]): A dictionary of experiment results.
+    """
+
+    summaries = []
+    for experiment_description, experiments_result in experiments_results.items():
+        experiment_summary = get_single_experiment_summary(experiments_result)
+        summaries.append(
+            convert_experiment_key_to_dict(experiment_description) | experiment_summary
+        )
+
+    return pd.DataFrame(summaries).round(2)
