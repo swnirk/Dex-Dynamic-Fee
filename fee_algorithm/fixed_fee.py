@@ -11,7 +11,7 @@ class FixedFee(FeeKnownBeforeTradeAlgorithm):
     def get_a_to_b_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.exchange_fee_rate
 
-    def process_trade(self, pool_balance_change: BalanceChange) -> None:
+    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
         pass
 
     def process_oracle_price(self, a_to_b_price: float):

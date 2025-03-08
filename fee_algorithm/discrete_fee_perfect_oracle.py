@@ -22,7 +22,7 @@ class DiscreteFeePerfectOracle(FeeKnownBeforeTradeAlgorithm):
     def process_oracle_price(self, a_to_b_price: float):
         self.oracle_a_to_b_price = a_to_b_price
 
-    def process_trade(self, balance_change: BalanceChange):
+    def process_trade(self, balance_change: BalanceChange, pool_state: PoolLiquidityState):
         pass
 
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:

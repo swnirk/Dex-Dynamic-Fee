@@ -31,7 +31,7 @@ class FeeBasedOnHistoricalPrice(FeeKnownBeforeTradeAlgorithm):
             alpha=self.alpha, initial_value=pool_state.get_b_to_a_exchange_price()
         )
 
-    def process_trade(self, pool_balance_change: BalanceChange) -> None:
+    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
         pass
 
     def process_oracle_price(self, a_to_b_price: float):

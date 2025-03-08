@@ -9,10 +9,11 @@ import logging
 from pool.pool import Pool
 from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
-from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm
+from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm, FeeUnknownBeforeTradeAlgorithm
 from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
 from numpy import isclose
 from dataclasses import dataclass
+from user.informed_user_based_on_volume_fee import arbitrage_profit_A_to_B
 
 
 @dataclass
@@ -62,9 +63,9 @@ class InformedUser(User):
 
         if isinstance(pool.fee_algorithm, FeeKnownBeforeTradeAlgorithm):
             optimal_delta_x = self._get_optimal_a_to_b_swap_when_fee_known_before_trade(
-                pool.liquidity_state,
-                prices,
-                pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
+                    pool.liquidity_state,
+                    prices,
+                    pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
                     pool_state=pool.liquidity_state
                 ),
             )
@@ -77,6 +78,14 @@ class InformedUser(User):
                     pool.fee_algorithm.default_fee_rate,
                     pool.fee_algorithm.oracle_a_to_b_price,
                 )
+            )
+        elif isinstance(pool.fee_algorithm, FeeUnknownBeforeTradeAlgorithm):
+            optimal_delta_x = self._get_optimal_a_to_b_swap_when_fee_unknown_before_trade(
+                    pool.liquidity_state,
+                    prices,
+                    pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
+                    pool_state=pool.liquidity_state
+                ),
             )
         else:
             raise NotImplementedError(
@@ -116,6 +125,38 @@ class InformedUser(User):
         # In terms of "pool" balance;
         # So, if optimal_delta_x is 1, than optimal action is increasing pool's x-balance by 1 and thus selling 1 unit of x
         optimal_delta_x = (np.sqrt(x * y * beta / q) - x) / beta
+
+        logging.debug(f"Optimal delta x: {optimal_delta_x}")
+
+        if optimal_delta_x < 0:
+            # This may happen when fee rate is too high for any profitable swap
+            return None
+
+        return optimal_delta_x
+    
+    
+    def _get_optimal_a_to_b_swap_when_fee_unknown_before_trade(
+        self,
+        liquidity_state: PoolLiquidityState,
+        prices: PricesSnapshot,
+        fee_rate: float,
+    ):
+        x = liquidity_state.quantity_a
+        y = liquidity_state.quantity_b
+        q = prices.get_a_to_b_price()
+        num_points = 50
+        max_frac = 0.05
+
+        # assert liquidity_state.get_a_to_b_exchange_price() > q
+
+        candidates = np.linspace(0, max_frac * x, num_points)
+        best_profit = -np.inf
+        optimal_delta_x = 0
+        for delta in candidates:
+            profit = arbitrage_profit_A_to_B(x, y, delta, q)
+            if profit > best_profit:
+                best_profit = profit
+                optimal_delta_x = delta
 
         logging.debug(f"Optimal delta x: {optimal_delta_x}")
 
