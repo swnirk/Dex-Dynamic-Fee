@@ -151,6 +151,9 @@ class Simulation:
 
         for index, (_, row) in enumerate(prices.iterrows()):
             prices_snapshot = self._get_prices_snapshot(row)
+            
+            previous_quantity_a = self.pool.liquidity_state.quantity_a
+            previous_quantity_b = self.pool.liquidity_state.quantity_b
 
             self.pool.process_oracle_price(
                 a_to_b_price=prices_snapshot.get_a_to_b_price()
@@ -166,7 +169,7 @@ class Simulation:
 
             self._update_all_valuations(prices_snapshot)
 
-            self.pool.fee_algorithm.process_block_end(self.pool.liquidity_state)
+            self.pool.fee_algorithm.process_block_end(previous_quantity_a, previous_quantity_b, self.pool.liquidity_state)
 
             if (return_intermediate_results) or index == len(prices) - 1:
                 snapshots.append(self._get_current_state_snapshot(prices_snapshot))

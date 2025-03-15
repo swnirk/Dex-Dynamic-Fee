@@ -24,7 +24,7 @@ class BasedOnTradeVolumeFee(FeeUnknownBeforeTradeAlgorithm):
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass
 
     def inverse(self) -> "BasedOnTradeVolumeFee":

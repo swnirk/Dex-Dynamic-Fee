@@ -28,7 +28,7 @@ class FeeAlgorithm(ABC):
         pass
 
     @abstractmethod
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass
 
 
@@ -63,7 +63,7 @@ class FeeKnownBeforeTradeAlgorithm(FeeAlgorithm, ABC):
         return self.get_a_to_b_exchange_fee_rate(pool_state) * x_user
 
     @abstractmethod
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass
 
 
@@ -98,5 +98,5 @@ class FeeUnknownBeforeTradeAlgorithm(FeeAlgorithm, ABC):
         return self.get_a_to_b_exchange_fee_rate(pool_state) * x_user
 
     @abstractmethod
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass

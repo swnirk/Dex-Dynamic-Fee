@@ -6,14 +6,12 @@ import logging
 
 
 @dataclass
-class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
+class AMMforAMMfee(FeeKnownBeforeTradeAlgorithm):
     a_to_b_exchange_fee_rate: float
     b_to_a_exchange_fee_rate: float
 
-    a_to_b_trade_count: int = 0
-    b_to_a_trade_count: int = 0
-
-    fee_step: float = 0.0001  # 1 bps
+    A: float = 1e8
+    k: float = 0.006
 
     def get_a_to_b_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.a_to_b_exchange_fee_rate
@@ -24,52 +22,36 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
-        pass
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
+        prev_DEX_p = prev_quantity_a / prev_quantity_b
+        cur_DEX_p = pool_state.quantity_a / pool_state.quantity_b
+        delta = cur_DEX_p - prev_DEX_p
+        # print(delta)
+        # self.b_to_a_exchange_fee_rate += delta*self.A
+        # if self.b_to_a_exchange_fee_rate <= 0.0:
+        #     self.b_to_a_exchange_fee_rate = 0.0001
+        # if self.b_to_a_exchange_fee_rate >= 0.006:
+        #     self.b_to_a_exchange_fee_rate = 0.0059
+        # self.a_to_b_exchange_fee_rate = self.k - self.b_to_a_exchange_fee_rate
 
-    def inverse(self) -> "BasedOnTradeCountFee":
-        return BasedOnTradeCountFee(
+        self.a_to_b_exchange_fee_rate += delta*self.A
+        if self.a_to_b_exchange_fee_rate <= 0.0:
+            self.a_to_b_exchange_fee_rate = 0.0001
+        if self.a_to_b_exchange_fee_rate >= 0.006:
+            self.a_to_b_exchange_fee_rate = 0.0059
+        self.b_to_a_exchange_fee_rate = self.k - self.a_to_b_exchange_fee_rate
+
+    def inverse(self) -> "AMMforAMMfee":
+        return AMMforAMMfee(
             a_to_b_exchange_fee_rate=self.b_to_a_exchange_fee_rate,
             b_to_a_exchange_fee_rate=self.a_to_b_exchange_fee_rate,
-            a_to_b_trade_count=self.b_to_a_trade_count,
-            b_to_a_trade_count=self.a_to_b_trade_count,
-            fee_step=self.fee_step,
+            A=self.A,
+            k=self.k
         )
 
     def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
-        delta_a = pool_balance_change.delta_x
-        delta_b = pool_balance_change.delta_y
-
-        if delta_a < 0:
-            new_a_b_fee = self.a_to_b_exchange_fee_rate + self.fee_step
-            new_b_a_fee = self.b_to_a_exchange_fee_rate - self.fee_step
-            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
-                self.a_to_b_exchange_fee_rate += self.fee_step
-                if self.b_to_a_exchange_fee_rate > self.fee_step:
-                    self.b_to_a_exchange_fee_rate -= self.fee_step
-            else:
-                new_a_b_fee = self.a_to_b_exchange_fee_rate + self.fee_step/2
-                new_b_a_fee = self.b_to_a_exchange_fee_rate - self.fee_step/2
-                if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
-                    self.a_to_b_exchange_fee_rate += self.fee_step/2
-                    if self.b_to_a_exchange_fee_rate > self.fee_step/2:
-                        self.b_to_a_exchange_fee_rate -= self.fee_step/2
-        elif delta_b < 0:
-            new_a_b_fee = self.a_to_b_exchange_fee_rate - self.fee_step
-            new_b_a_fee = self.b_to_a_exchange_fee_rate + self.fee_step
-            if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
-                self.b_to_a_exchange_fee_rate += self.fee_step
-                if self.a_to_b_exchange_fee_rate > self.fee_step:
-                    self.a_to_b_exchange_fee_rate -= self.fee_step
-            else:
-                new_a_b_fee = self.a_to_b_exchange_fee_rate - self.fee_step/2
-                new_b_a_fee = self.b_to_a_exchange_fee_rate + self.fee_step/2
-                if (new_a_b_fee+new_b_a_fee)/2 <= 0.003:
-                    self.b_to_a_exchange_fee_rate += self.fee_step
-                    if self.a_to_b_exchange_fee_rate > self.fee_step:
-                        self.a_to_b_exchange_fee_rate -= self.fee_step
+        pass
 
         logging.info(
-            f"Updated fees: a_to_b_exchange_fee_rate={self.a_to_b_exchange_fee_rate}, b_to_a_exchange_fee_rate={self.b_to_a_exchange_fee_rate}, "
-            f"a_to_b_trade_count={self.a_to_b_trade_count}, b_to_a_trade_count={self.b_to_a_trade_count}"
+            f"Updated fees: a_to_b_exchange_fee_rate={self.a_to_b_exchange_fee_rate}, b_to_a_exchange_fee_rate={self.b_to_a_exchange_fee_rate}"
         )

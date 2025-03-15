@@ -37,7 +37,7 @@ class FeeBasedOnHistoricalPrice(FeeKnownBeforeTradeAlgorithm):
     def process_oracle_price(self, a_to_b_price: float):
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         assert self.a_to_b_price_ema is not None
         assert self.b_to_a_price_ema is not None
         self.a_to_b_price_ema.update(pool_state.get_a_to_b_exchange_price())
