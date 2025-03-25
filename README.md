@@ -37,8 +37,8 @@ Here's how to set up the development environment:
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/dynamic-fee-dex.git
-   cd dynamic-fee-dex
+   git clone https://github.com/swnirk/Dex-Dynamic-Fee/tree/camera-ready
+   cd Dex-Dynamic-Fee
    ```
 
 3. Create and activate a virtual environment:
