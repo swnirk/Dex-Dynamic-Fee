@@ -16,6 +16,7 @@ This repository contains the code and simulation framework for the paper "Dynami
     - `adaptive_fee_based_on_block_price_move.py` – BA -- block-adaptive fee
     - `based_on_trade_count_fee.py` – DA -- deal-adaptive fee
     - `discrete_fee_perfect_oracle.py` – OB -- oracle-based benchmark
+    - There are also other algorithms in this repository, but they are not included in the paper (mostly due to poor performance)
     
 - **Simulation framework** is implemented in [`simulation/`](./simulation)
 
