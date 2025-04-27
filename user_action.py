@@ -56,6 +56,12 @@ class UserAction:
             - self.network_fee
         )
 
+    def get_turnover(self, prices: PricesSnapshot):
+        if self.delta_x > 0:
+            return self.delta_x * prices.price_a
+        else:
+            return self.delta_y * prices.price_b
+
     def inverse(self) -> "UserAction":
         return UserAction(
             self.delta_y, self.delta_x, self.fee_y, self.fee_x, self.network_fee

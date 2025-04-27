@@ -145,9 +145,12 @@ def get_single_experiment_summary(experiment_result: ExperimentResult) -> dict:
     return {
         "iu_markout": last_iu_state.total_markout,
         "iu_trade_count": last_iu_state.trades_count,
+        "iu_yield": last_iu_state.yield_markout(),
         "uu_markout": last_uu_state.total_markout,
         "uu_trade_count": last_uu_state.trades_count,
+        "uu_yield": last_uu_state.yield_markout(),
         "lp_markout": simulation_result.snapshots[-1].lp_state.total_markout,
+        "lp_yield": simulation_result.snapshots[-1].lp_state.yield_markout(),
         "impermanent_loss": extract_impermanent_loss(simulation_result)[-1],
     }
 

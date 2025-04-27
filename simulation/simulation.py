@@ -38,19 +38,25 @@ class ParticipantState:
         default_factory=lambda: Position(position_a=0, position_b=0)
     )
     valuation: float = 0
+    turnover: float = 0
 
     def update_valuation(self, prices: PricesSnapshot):
         self.valuation = capital_function(
             self.position.position_a, self.position.position_b, prices
         )
 
+    def yield_markout(self):
+        return (self.total_markout / self.turnover) * 10**4
+
     def process_trade(
         self,
         balance_change: BalanceChange,
         deal_markout: float,
+        turnover: float,
     ):
         self.trades_count += 1
         self.total_markout += deal_markout
+        self.turnover += turnover
         self.position.process_trade(balance_change.delta_x, balance_change.delta_y)
 
 
@@ -202,11 +208,13 @@ class Simulation:
         self.user_states[user_type].process_trade(
             user_action.get_user_balance_change(),
             user_action.get_user_markout(prices),
+            user_action.get_turnover(prices),
         )
 
         self.lp_state.process_trade(
             user_action.get_lp_balance_change(),
             user_action.get_lp_markout(prices),
+            user_action.get_turnover(prices),
         )
 
         logging.info(
