@@ -31,7 +31,7 @@ class AdaptiveBasedOnPreviousBlockPriceMoveFee(FeeKnownBeforeTradeAlgorithm):
         self.prev_block_begin_b_to_a_price = pool_state.get_b_to_a_exchange_price()
         self.prev_block_end_b_to_a_price = pool_state.get_b_to_a_exchange_price()
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         assert self.prev_block_end_a_to_b_price is not None
         assert self.prev_block_end_b_to_a_price is not None
 

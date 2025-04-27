@@ -36,13 +36,13 @@ class ContinuousFeePerfectOracle(FeeAlgorithm):
 
         return x_user - x_to_reach_amm
 
-    def process_trade(self, _: BalanceChange) -> None:
+    def process_trade(self, _: BalanceChange, pool_state: PoolLiquidityState) -> None:
         pass
 
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass
 
     def inverse(self) -> "ContinuousFeePerfectOracle":

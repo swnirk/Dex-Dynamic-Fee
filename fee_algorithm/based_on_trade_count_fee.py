@@ -24,7 +24,7 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         pass
 
     def inverse(self) -> "BasedOnTradeCountFee":
@@ -36,7 +36,7 @@ class BasedOnTradeCountFee(FeeKnownBeforeTradeAlgorithm):
             fee_step=self.fee_step,
         )
 
-    def process_trade(self, pool_balance_change: BalanceChange) -> None:
+    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
         delta_a = pool_balance_change.delta_x
         delta_b = pool_balance_change.delta_y
 

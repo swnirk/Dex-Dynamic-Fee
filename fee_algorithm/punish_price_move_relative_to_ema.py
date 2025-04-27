@@ -45,13 +45,13 @@ class PunishPriceMoveRelativeToEmaIncludingCurrentTradeFee(FeeAlgorithm):
             decay=self.decay, initial_value=pool_state.get_b_to_a_exchange_price()
         )
 
-    def process_trade(self, pool_balance_change: BalanceChange) -> None:
+    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
         pass
 
     def process_oracle_price(self, a_to_b_price: float):
         pass
 
-    def process_block_end(self, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
         assert self.a_t_b_price_exponential_counter is not None
         assert self.b_to_a_price_exponential_counter is not None
         self.a_t_b_price_exponential_counter.update(
