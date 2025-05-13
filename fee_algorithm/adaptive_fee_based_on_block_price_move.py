@@ -66,5 +66,5 @@ class AdaptiveBasedOnPreviousBlockPriceMoveFee(FeeKnownBeforeTradeAlgorithm):
             prev_block_end_b_to_a_price=self.prev_block_end_a_to_b_price,
         )
 
-    def process_trade(self, pool_balance_change: BalanceChange) -> None:
+    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
         pass

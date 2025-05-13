@@ -66,7 +66,7 @@ def plot_participants_markouts(
         keys -- experiment names
         values -- ExperimentResult
     """
-
+    # print(list(results.values())[0])
     timestamps = list(results.values())[0].simulation_result.timestamps
 
     # We don't need to plot uninformed users markouts charts as they are almost always trivial
