@@ -20,6 +20,8 @@ class HistoricalDataDescription:
 
     candle_interval: str = "1m"
 
+    cache_data: bool = True
+
 
 @dataclass
 class GBMParameters:

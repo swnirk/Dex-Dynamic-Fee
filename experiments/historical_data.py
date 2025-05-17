@@ -24,11 +24,21 @@ def download_historical_data(path: Path, description: HistoricalDataDescription)
 def get_experiment_historical_data(
     data_root: Path, description: HistoricalDataDescription
 ):
-    data_file_name = get_cached_historical_data_file_name(description)
-    data_file_path = data_root / data_file_name
+    if description.cache_data:
+        data_file_name = get_cached_historical_data_file_name(description)
+        data_file_path = data_root / data_file_name
 
-    if not data_file_path.exists():
-        logging.info(f"Cached data file {data_file_path} not found, downloading...")
-        download_historical_data(data_file_path, description)
+        if not data_file_path.exists():
+            logging.info(f"Cached data file {data_file_path} not found, downloading...")
+            download_historical_data(data_file_path, description)
 
-    return pd.read_csv(data_file_path)
+        return pd.read_csv(data_file_path)
+    else:
+        return get_historical_prices_for_two_assets(
+            description.stable_coin_symbol,
+            description.A_symbol,
+            description.B_symbol,
+            description.candle_interval,
+            description.start_time,
+            description.end_time,
+        )

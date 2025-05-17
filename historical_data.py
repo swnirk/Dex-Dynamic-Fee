@@ -23,42 +23,6 @@ BINANCE_API_URL = "https://api.binance.com/api/v3/klines"
 def _convert_time_to_binance_format(time: datetime) -> int:
     return int((time.timestamp() * 1000))
 
-def _generate_constant_price_data(
-    start_time: datetime, 
-    end_time: datetime, 
-    interval: str
-) -> pd.DataFrame:
-    """
-    Generates artificial price data where Close=1, Open=1, High=1, Low=1, Volume=0.
-    Useful for USDT/USDT pairs.
-    
-    Args:
-        start_time (datetime): Start time for the data.
-        end_time (datetime): End time for the data.
-        interval (str): Time interval (e.g., "1h", "1d").
-    
-    Returns:
-        pd.DataFrame: DataFrame with constant price=1.
-    """
-    time_range = pd.date_range(start=start_time, end=end_time, freq=interval)
-    
-    data = {
-        "Open time": time_range,
-        "Open": [1.0] * len(time_range),
-        "High": [1.0] * len(time_range),
-        "Low": [1.0] * len(time_range),
-        "Close": [1.0] * len(time_range),
-        "Volume": [0.0] * len(time_range),
-        "Close time": time_range + pd.to_timedelta(interval),
-        "Quote asset volume": [0.0] * len(time_range),
-        "Number of trades": [0] * len(time_range),
-        "Taker buy base asset volume": [0.0] * len(time_range),
-        "Taker buy quote asset volume": [0.0] * len(time_range),
-        "Ignore": [0.0] * len(time_range),
-    }
-    
-    return pd.DataFrame(data)
-
 
 def get_historical_data(
     symbol: str, interval: str, start_time: datetime, end_time: datetime
@@ -75,10 +39,12 @@ def get_historical_data(
     Returns:
     pd.DataFrame: The historical data
     """
+
+    always_return_1 = False
     if symbol.upper() == "USDTUSDT":
-        print(f"Symbol {symbol} is USDT/USDT - returning price=1")
-        return _generate_constant_price_data(start_time, end_time, interval)
-    
+        always_return_1 = True
+        symbol = "ETHUSDT"
+
     params = {
         "symbol": symbol,
         "interval": interval,
@@ -86,14 +52,10 @@ def get_historical_data(
         "endTime": _convert_time_to_binance_format(end_time),
         "limit": 1000,  # Binance API limit
     }
-    print(symbol)
     data = []
     while True:
         response = requests.get(BINANCE_API_URL, params=params)
         temp_data = response.json()
-        # print(temp_data)
-        # print(len(temp_data))
-        # print(len(temp_data[0]))
         if not temp_data:
             break
         data.extend(temp_data)
@@ -110,6 +72,12 @@ def get_historical_data(
         "Close",
     ]:
         data[float_columns] = data[float_columns].astype(float)
+
+    if always_return_1:
+        data["Open"] = 1
+        data["High"] = 1
+        data["Low"] = 1
+        data["Close"] = 1
 
     return data
 
@@ -128,8 +96,6 @@ def get_historical_prices_for_two_assets(
     second_asset_data = get_historical_data(
         second_ticker, interval, start_time, end_time
     )
-    print(f"A symbol candles count: {len(first_asset_data)}")
-    print(f"B symbol candles count: {len(second_asset_data)}")
 
     first_asset_data = first_asset_data[["Open time", "Close time", "Open"]]
     first_asset_data = first_asset_data.rename(columns={"Open": "price_A"})
@@ -141,5 +107,4 @@ def get_historical_prices_for_two_assets(
     data = data.drop(columns=["Close time"])
     data = data.rename(columns={"Open time": "time"})
 
-    print(f"Joined candles count: {len(data)}")
     return data
