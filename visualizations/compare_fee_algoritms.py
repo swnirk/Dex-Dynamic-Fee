@@ -139,6 +139,7 @@ def plot_impermanent_loss(
 
 
 def get_single_experiment_summary(experiment_result: ExperimentResult) -> dict:
+    print(experiment_result)
     simulation_result = experiment_result.simulation_result
     last_iu_state = simulation_result.snapshots[-1].user_states[UserType.INFORMED]
     last_uu_state = simulation_result.snapshots[-1].user_states[UserType.UNINFORMED]

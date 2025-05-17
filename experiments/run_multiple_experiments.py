@@ -57,6 +57,7 @@ def run_multiple_experiments(
                 desc="Running Experiments",
             ):
                 experiment_name = future_to_experiment[future]
+                print(future.result())
                 try:
                     results[experiment_name] = future.result()
                 except Exception as e:
