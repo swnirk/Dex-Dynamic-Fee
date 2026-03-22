@@ -69,6 +69,7 @@ def run_experiment(
     simulation = Simulation(
         pool=pool,
         network_fee=experiment.network_fee,
+        lp_metrics_price_source=experiment.lp_metrics_price_source,
     )
 
     simulation_result = simulation.simulate(

@@ -80,6 +80,7 @@ class Simulation:
         self,
         pool: Pool,
         network_fee: float,
+        lp_metrics_price_source: str = "fair",
     ):
         """
         Args:
@@ -89,6 +90,7 @@ class Simulation:
 
         self.pool = pool
         self.network_fee = network_fee
+        self.lp_metrics_price_source = lp_metrics_price_source
         self.num_A_to_B_deals = 0
         self.num_B_to_A_deals = 0
         self.user_states = {
@@ -112,8 +114,9 @@ class Simulation:
     def _update_all_valuations(self, prices: PricesSnapshot):
         for user_state in self.user_states.values():
             user_state.update_valuation(prices)
-        self.lp_state.update_valuation(prices)
-        self.lp_with_just_hold_strategy.update_valuation(prices)
+        lp_prices = self._get_lp_metric_prices(prices)
+        self.lp_state.update_valuation(lp_prices)
+        self.lp_with_just_hold_strategy.update_valuation(lp_prices)
 
     def simulate(
         self,
@@ -203,7 +206,14 @@ class Simulation:
 
         validate_user_action(self.pool.liquidity_state, user_action)
 
+        lp_balance_change = user_action.get_lp_balance_change()
         self.pool.process_trade(user_action.get_pool_balance_change())
+        lp_prices = self._get_lp_metric_prices(prices)
+        lp_markout = capital_function(
+            lp_balance_change.delta_x,
+            lp_balance_change.delta_y,
+            lp_prices,
+        )
 
         self.user_states[user_type].process_trade(
             user_action.get_user_balance_change(),
@@ -212,8 +222,8 @@ class Simulation:
         )
 
         self.lp_state.process_trade(
-            user_action.get_lp_balance_change(),
-            user_action.get_lp_markout(prices),
+            lp_balance_change,
+            lp_markout,
             user_action.get_turnover(prices),
         )
 
@@ -228,3 +238,17 @@ class Simulation:
         fair_price_A = row["price_A"]
         fair_price_B = row["price_B"]
         return PricesSnapshot(fair_price_A, fair_price_B)
+
+    def _get_lp_metric_prices(self, fair_prices: PricesSnapshot) -> PricesSnapshot:
+        if self.lp_metrics_price_source == "fair":
+            return fair_prices
+
+        if self.lp_metrics_price_source == "pool":
+            return PricesSnapshot(
+                price_a=self.pool.liquidity_state.get_a_to_b_exchange_price(),
+                price_b=1.0,
+            )
+
+        raise ValueError(
+            f"Unsupported LP metrics price source: {self.lp_metrics_price_source}"
+        )

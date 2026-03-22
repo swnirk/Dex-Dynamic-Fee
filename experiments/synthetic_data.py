@@ -3,6 +3,8 @@ from experiments.experiment import SyntheticDataDescription
 import numpy as np
 import pandas as pd
 
+from candle_interval import normalize_candle_interval_for_pandas
+
 
 def extract_gbm_params(time_series: np.ndarray, delta_t: float = 1) -> GBMParameters:
     """
@@ -82,7 +84,7 @@ def generate_synthetic_data(description: SyntheticDataDescription) -> pd.DataFra
         pd.date_range(
             start=description.start_time,
             end=description.end_time,
-            freq=description.candle_interval,
+            freq=normalize_candle_interval_for_pandas(description.candle_interval),
         )
     )
 

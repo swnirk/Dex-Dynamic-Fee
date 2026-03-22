@@ -1,6 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import requests
 import pandas as pd
+
+from candle_interval import (
+    get_binance_fetch_interval,
+    normalize_candle_interval_for_binance,
+    normalize_candle_interval_for_pandas,
+)
 
 BINANCE_RESPONSE_COLUMNS = [
     "Open time",
@@ -45,9 +51,12 @@ def get_historical_data(
         always_return_1 = True
         symbol = "ETHUSDT"
 
+    fetch_interval = get_binance_fetch_interval(interval)
+    requested_interval = normalize_candle_interval_for_binance(interval)
+
     params = {
         "symbol": symbol,
-        "interval": interval,
+        "interval": fetch_interval,
         "startTime": _convert_time_to_binance_format(start_time),
         "endTime": _convert_time_to_binance_format(end_time),
         "limit": 1000,  # Binance API limit
@@ -70,8 +79,14 @@ def get_historical_data(
         "High",
         "Low",
         "Close",
+        "Volume",
+        "Quote asset volume",
+        "Taker buy base asset volume",
+        "Taker buy quote asset volume",
     ]:
         data[float_columns] = data[float_columns].astype(float)
+
+    data["Number of trades"] = data["Number of trades"].astype(int)
 
     if always_return_1:
         data["Open"] = 1
@@ -79,7 +94,47 @@ def get_historical_data(
         data["Low"] = 1
         data["Close"] = 1
 
+    if fetch_interval != requested_interval:
+        data = resample_klines(
+            data=data,
+            target_interval=interval,
+            origin=start_time,
+        )
+
     return data
+
+
+def resample_klines(
+    data: pd.DataFrame, target_interval: str, origin: datetime
+) -> pd.DataFrame:
+    if data.empty:
+        return data
+
+    target_pandas_interval = normalize_candle_interval_for_pandas(target_interval)
+
+    resampled = (
+        data.set_index("Open time")
+        .resample(target_pandas_interval, origin=origin, label="left", closed="left")
+        .agg(
+            {
+                "Open": "first",
+                "High": "max",
+                "Low": "min",
+                "Close": "last",
+                "Volume": "sum",
+                "Close time": "last",
+                "Quote asset volume": "sum",
+                "Number of trades": "sum",
+                "Taker buy base asset volume": "sum",
+                "Taker buy quote asset volume": "sum",
+                "Ignore": "last",
+            }
+        )
+        .dropna(subset=["Open"])
+        .reset_index()
+    )
+
+    return resampled
 
 
 def get_historical_prices_for_two_assets(

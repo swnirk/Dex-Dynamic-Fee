@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 from simulation.simulation import SimulationResult
 import numpy as np
-from typing import Union
+from typing import Literal, Union
 
 
 @dataclass
@@ -18,7 +18,7 @@ class HistoricalDataDescription:
     B_symbol: str = "SHIB"
     stable_coin_symbol: str = "USDT"
 
-    candle_interval: str = "1m"
+    candle_interval: str = "1min"
 
     cache_data: bool = True
 
@@ -40,12 +40,11 @@ class SyntheticDataDescription:
 
     start_time: datetime
     end_time: datetime
-    candle_interval: str = (
-        "1min"  # Slightly different notation because of Binance API peculiarities
-    )
+    candle_interval: str = "1min"
 
 
 InputDataDescription = Union[HistoricalDataDescription, SyntheticDataDescription]
+LPMetricsPriceSource = Literal["fair", "pool"]
 
 
 @dataclass
@@ -67,6 +66,7 @@ class Experiment:
     initial_pool_value: int = 25 * 1000000  # in stable coin
 
     network_fee: float = 5  # in stable coin
+    lp_metrics_price_source: LPMetricsPriceSource = "fair"
 
     random_seed: int = 0
 
