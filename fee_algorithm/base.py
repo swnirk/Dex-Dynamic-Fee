@@ -122,3 +122,15 @@ class FeeUnknownBeforeTradeAlgorithm(FeeAlgorithm, ABC):
         pool_state: PoolLiquidityState,
     ) -> None:
         pass
+
+
+@dataclass
+class TradeSizeAwareFeeAlgorithm(FeeAlgorithm, ABC):
+    @abstractmethod
+    def get_optimal_a_to_b_swap(
+        self,
+        pool_state: PoolLiquidityState,
+        network_fee: float,
+        prices,
+    ) -> Optional[float]:
+        pass

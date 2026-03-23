@@ -11,6 +11,7 @@ from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
 from fee_algorithm.base import (
     FeeKnownBeforeTradeAlgorithm,
+    TradeSizeAwareFeeAlgorithm,
     FeeUnknownBeforeTradeAlgorithm,
 )
 from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
@@ -64,7 +65,13 @@ class InformedUser(User):
     ) -> Optional[UserAction]:
         optimal_delta_x = None
 
-        if isinstance(pool.fee_algorithm, FeeKnownBeforeTradeAlgorithm):
+        if isinstance(pool.fee_algorithm, TradeSizeAwareFeeAlgorithm):
+            optimal_delta_x = pool.fee_algorithm.get_optimal_a_to_b_swap(
+                pool_state=pool.liquidity_state,
+                network_fee=network_fee,
+                prices=prices,
+            )
+        elif isinstance(pool.fee_algorithm, FeeKnownBeforeTradeAlgorithm):
             optimal_delta_x = self._get_optimal_a_to_b_swap_when_fee_known_before_trade(
                 pool.liquidity_state,
                 prices,
