@@ -9,7 +9,10 @@ import logging
 from pool.pool import Pool
 from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
-from fee_algorithm.base import FeeKnownBeforeTradeAlgorithm, FeeUnknownBeforeTradeAlgorithm
+from fee_algorithm.base import (
+    FeeKnownBeforeTradeAlgorithm,
+    FeeUnknownBeforeTradeAlgorithm,
+)
 from fee_algorithm.continuous_fee_perfect_oracle import ContinuousFeePerfectOracle
 from numpy import isclose
 from dataclasses import dataclass
@@ -63,9 +66,9 @@ class InformedUser(User):
 
         if isinstance(pool.fee_algorithm, FeeKnownBeforeTradeAlgorithm):
             optimal_delta_x = self._get_optimal_a_to_b_swap_when_fee_known_before_trade(
-                    pool.liquidity_state,
-                    prices,
-                    pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
+                pool.liquidity_state,
+                prices,
+                pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
                     pool_state=pool.liquidity_state
                 ),
             )
@@ -80,12 +83,14 @@ class InformedUser(User):
                 )
             )
         elif isinstance(pool.fee_algorithm, FeeUnknownBeforeTradeAlgorithm):
-            optimal_delta_x = self._get_optimal_a_to_b_swap_when_fee_unknown_before_trade(
+            optimal_delta_x = (
+                self._get_optimal_a_to_b_swap_when_fee_unknown_before_trade(
                     pool.liquidity_state,
                     prices,
                     pool.fee_algorithm.get_a_to_b_exchange_fee_rate(
-                    pool_state=pool.liquidity_state
-                ),
+                        pool_state=pool.liquidity_state
+                    ),
+                )
             )
         else:
             raise NotImplementedError(
@@ -133,8 +138,7 @@ class InformedUser(User):
             return None
 
         return optimal_delta_x
-    
-    
+
     def _get_optimal_a_to_b_swap_when_fee_unknown_before_trade(
         self,
         liquidity_state: PoolLiquidityState,
