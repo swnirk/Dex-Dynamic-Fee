@@ -55,22 +55,12 @@ class ZeroILFee(TradeSizeAwareFeeAlgorithm):
         network_fee: float,
         prices: PricesSnapshot,
     ) -> float | None:
-        x = pool_state.quantity_a
-        candidates = np.linspace(0, 10 * x, 1000)
 
-        best_markout = -np.inf
-        optimal_delta_x = None
-        for delta_x in candidates:
-            action = construct_user_swap_a_to_b(
-                pool_state=pool_state,
-                fee_algo=self,
-                amount_to_exchange_A=delta_x,
-                network_fee=network_fee,
-            )
-            markout = action.get_user_markout(prices)
-            if markout > best_markout:
-                best_markout = markout
-                optimal_delta_x = delta_x
+        x = pool_state.quantity_a
+        y = pool_state.quantity_b
+        q = prices.price_a / prices.price_b
+
+        optimal_delta_x = (np.sqrt(x * y / q) - x) / 2
 
         return optimal_delta_x
 
