@@ -17,14 +17,19 @@ class BasedOnTradeVolumeFee(FeeUnknownBeforeTradeAlgorithm):
 
     def get_a_to_b_exchange_fee_rate(self, pool_state: PoolLiquidityState) -> float:
         return self.a_to_b_exchange_fee_rate
-    
+
     def process_oracle_price(self, a_to_b_price: float) -> None:
         pass
 
     def process_initial_pool_state(self, pool_state: PoolLiquidityState) -> None:
         pass
 
-    def process_block_end(self, prev_quantity_a: float, prev_quantity_b: float, pool_state: PoolLiquidityState) -> None:
+    def process_block_end(
+        self,
+        prev_quantity_a: float,
+        prev_quantity_b: float,
+        pool_state: PoolLiquidityState,
+    ) -> None:
         pass
 
     def inverse(self) -> "BasedOnTradeVolumeFee":
@@ -36,12 +41,18 @@ class BasedOnTradeVolumeFee(FeeUnknownBeforeTradeAlgorithm):
             z0=self.z0,
         )
 
-    def process_trade(self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState) -> None:
+    def process_trade(
+        self, pool_balance_change: BalanceChange, pool_state: PoolLiquidityState
+    ) -> None:
         ratio_x = abs(pool_balance_change.delta_x) / pool_state.quantity_a
-        self.a_to_b_exchange_fee_rate = self.fee_min + (self.fee_max - self.fee_min) / (1 + np.exp(-(ratio_x - self.z0)))
+        self.a_to_b_exchange_fee_rate = self.fee_min + (self.fee_max - self.fee_min) / (
+            1 + np.exp(-(ratio_x - self.z0))
+        )
 
         ratio_y = abs(pool_balance_change.delta_y) / pool_state.quantity_b
-        self.b_to_a_exchange_fee_rate = self.fee_min + (self.fee_max - self.fee_min) / (1 + np.exp(-(ratio_y - self.z0)))
+        self.b_to_a_exchange_fee_rate = self.fee_min + (self.fee_max - self.fee_min) / (
+            1 + np.exp(-(ratio_y - self.z0))
+        )
 
         logging.info(
             f"Updated fees: a_to_b_exchange_fee_rate={self.a_to_b_exchange_fee_rate}, b_to_a_exchange_fee_rate={self.b_to_a_exchange_fee_rate}"

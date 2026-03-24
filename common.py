@@ -30,4 +30,6 @@ def get_amm_exchange_value_a_to_b(
     Returns:
     float: the value of the asset B that the AMM will return
     """
-    return (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B
+    # Equivalent to (quantity_A * quantity_B) / (quantity_A + delta_A) - quantity_B,
+    # but numerically stable when delta_A is close to 0.
+    return -(quantity_B * delta_A) / (quantity_A + delta_A)
