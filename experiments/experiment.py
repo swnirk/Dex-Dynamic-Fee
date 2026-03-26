@@ -18,7 +18,7 @@ class HistoricalDataDescription:
     B_symbol: str = "SHIB"
     stable_coin_symbol: str = "USDT"
 
-    candle_interval: str = "1min"
+    candle_interval: str = "12s"
 
     cache_data: bool = True
 
@@ -40,7 +40,7 @@ class SyntheticDataDescription:
 
     start_time: datetime
     end_time: datetime
-    candle_interval: str = "1min"
+    candle_interval: str = "12s"
 
 
 InputDataDescription = Union[HistoricalDataDescription, SyntheticDataDescription]
