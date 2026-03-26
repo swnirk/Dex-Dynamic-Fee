@@ -160,7 +160,7 @@ class Simulation:
 
         for index, (_, row) in enumerate(prices.iterrows()):
             prices_snapshot = self._get_prices_snapshot(row)
-            
+
             previous_quantity_a = self.pool.liquidity_state.quantity_a
             previous_quantity_b = self.pool.liquidity_state.quantity_b
 
@@ -178,7 +178,9 @@ class Simulation:
 
             self._update_all_valuations(prices_snapshot)
 
-            self.pool.fee_algorithm.process_block_end(previous_quantity_a, previous_quantity_b, self.pool.liquidity_state)
+            self.pool.fee_algorithm.process_block_end(
+                previous_quantity_a, previous_quantity_b, self.pool.liquidity_state
+            )
 
             if (return_intermediate_results) or index == len(prices) - 1:
                 snapshots.append(self._get_current_state_snapshot(prices_snapshot))
@@ -245,8 +247,9 @@ class Simulation:
 
         if self.lp_metrics_price_source == "pool":
             return PricesSnapshot(
-                price_a=self.pool.liquidity_state.get_a_to_b_exchange_price(),
-                price_b=1.0,
+                price_a=self.pool.liquidity_state.get_a_to_b_exchange_price()
+                * fair_prices.price_b,
+                price_b=fair_prices.price_b,
             )
 
         raise ValueError(
