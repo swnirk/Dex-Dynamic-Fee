@@ -1,3 +1,4 @@
+import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 from simulation.simulation import UserType, SimulationResult
@@ -191,3 +192,91 @@ def get_experiments_summary_by_description(
         )
 
     return pd.DataFrame(summaries).round(2)
+
+
+def export_markouts_to_csv(
+    period_alias: str,
+    results: dict[str, ExperimentResult],
+    output_dir: str = "csv_export",
+):
+    """
+    Export IU markouts, LP markouts and impermanent loss time series to CSV.
+    One CSV per metric with columns: timestamp + one column per fee algorithm.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    timestamps = list(results.values())[0].simulation_result.timestamps
+
+    # IU markouts
+    iu_data = {"timestamp": timestamps}
+    for name, er in results.items():
+        iu_data[name] = extract_user_markouts(er.simulation_result, UserType.INFORMED)
+    pd.DataFrame(iu_data).to_csv(
+        os.path.join(output_dir, f"{period_alias}_iu_markouts.csv"), index=False
+    )
+
+    # LP markouts
+    lp_data = {"timestamp": timestamps}
+    for name, er in results.items():
+        lp_data[name] = extract_lp_markouts(er.simulation_result)
+    pd.DataFrame(lp_data).to_csv(
+        os.path.join(output_dir, f"{period_alias}_lp_markouts.csv"), index=False
+    )
+
+    # Impermanent loss
+    il_data = {"timestamp": timestamps}
+    for name, er in results.items():
+        il_data[name] = extract_impermanent_loss(er.simulation_result)
+    pd.DataFrame(il_data).to_csv(
+        os.path.join(output_dir, f"{period_alias}_impermanent_loss.csv"), index=False
+    )
+
+
+def export_fee_history_to_csv(
+    experiment_result: ExperimentResult,
+    fee_algo_name: str,
+    period_alias: str,
+    output_dir: str = "csv_export",
+    first_updates: int | None = None,
+):
+    """
+    Export fee rate history (a_to_b and b_to_a) to CSV.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    snapshots = experiment_result.simulation_result.snapshots
+    timestamps = experiment_result.simulation_result.timestamps
+    if first_updates is not None:
+        snapshots = snapshots[:first_updates]
+        timestamps = timestamps[:first_updates]
+
+    a_to_b_fees = [s.pool.fee_algorithm.a_to_b_exchange_fee_rate for s in snapshots]
+    b_to_a_fees = [s.pool.fee_algorithm.b_to_a_exchange_fee_rate for s in snapshots]
+
+    pd.DataFrame({
+        "timestamp": timestamps,
+        "a_to_b_fee_rate": a_to_b_fees,
+        "b_to_a_fee_rate": b_to_a_fees,
+    }).to_csv(
+        os.path.join(output_dir, f"{period_alias}_{fee_algo_name}_fee_history.csv"),
+        index=False,
+    )
+
+
+def export_prices_to_csv(
+    results: dict[str, ExperimentResult],
+    output_dir: str = "csv_export",
+):
+    """
+    Export price_A, price_B and price ratio per period to CSV.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    for period_alias, er in results.items():
+        data = er.data
+        df = pd.DataFrame({
+            "time": data["time"] if "time" in data.columns else data.index,
+            "price_A": data["price_A"],
+            "price_B": data["price_B"],
+            "price_ratio_A_B": data["price_A"] / data["price_B"],
+        })
+        df.to_csv(
+            os.path.join(output_dir, f"{period_alias}_prices.csv"), index=False
+        )

@@ -29,6 +29,7 @@ def get_experiment_historical_data(
         data_file_path = data_root / data_file_name
 
         if not data_file_path.exists():
+            print(f"Cached data file {data_file_path} not found, downloading...")
             logging.info(f"Cached data file {data_file_path} not found, downloading...")
             download_historical_data(data_file_path, description)
 

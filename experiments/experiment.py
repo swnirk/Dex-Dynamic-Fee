@@ -18,7 +18,7 @@ class HistoricalDataDescription:
     B_symbol: str = "SHIB"
     stable_coin_symbol: str = "USDT"
 
-    candle_interval: str = "12s"
+    candle_interval: str = "1min"
 
     cache_data: bool = True
 

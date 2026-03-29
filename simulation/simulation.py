@@ -46,7 +46,10 @@ class ParticipantState:
         )
 
     def yield_markout(self):
-        return (self.total_markout / self.turnover) * 10**4
+        try:
+            return (self.total_markout / self.turnover) * 10**4
+        except ZeroDivisionError:
+            return 0
 
     def process_trade(
         self,
