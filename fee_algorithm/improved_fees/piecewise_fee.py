@@ -5,8 +5,11 @@ import numpy as np
 
 from balance_change import BalanceChange
 from fee_algorithm.base import FeeAlgorithm, TradeSizeAwareFeeAlgorithm
+from fee_algorithm.dynamic_fee_zero_il import ZeroILFee
 from pool.liquidity_state import PoolLiquidityState
 from prices_snapshot import PricesSnapshot
+
+_zero_il = ZeroILFee()
 
 
 @dataclass
@@ -33,20 +36,16 @@ class PiecewiseFee(TradeSizeAwareFeeAlgorithm):
             pool_state.inverse()
         )
 
-    @staticmethod
-    def _zero_il_fee(x_user: float, quantity_a: float) -> float:
-        fee_paid = (x_user * x_user) / (quantity_a + x_user)
-        return min(max(fee_paid, 0.0), x_user)
-
     def get_a_to_b_trade_fee(
         self, pool_state: PoolLiquidityState, x_user: float
     ) -> float:
         phi_1 = self._get_base_fee_rate(pool_state)
-        fixed_fee = phi_1 * x_user
-        zero_il_fee = self._zero_il_fee(x_user, pool_state.quantity_a)
-
-        fee = max(fixed_fee, zero_il_fee)
-
+        phi_2 = self._get_base_inverse_fee_rate(pool_state)
+        alpha = x_user / pool_state.quantity_a
+        if alpha < phi_1 + phi_2:
+            fee = phi_1 * x_user  # IG-регион: фиксированная комиссия
+        else:
+            fee = _zero_il.get_a_to_b_trade_fee(pool_state, x_user)  # IL-регион
         self.a_to_b_exchange_fee_rate = fee / x_user if x_user > 0 else 0.0
         return fee
 
@@ -75,9 +74,9 @@ class PiecewiseFee(TradeSizeAwareFeeAlgorithm):
         if alpha_fixed < boundary:
             return fixed_opt
 
-        # ZeroIL optimal swap
-        zero_il_opt = (np.sqrt(x * y / q) - x) / 2
-        if zero_il_opt > 0:
+        # ZeroIL optimal swap — reuse proven formula from ZeroILFee
+        zero_il_opt = _zero_il.get_optimal_a_to_b_swap(pool_state, network_fee, prices)
+        if zero_il_opt is not None and zero_il_opt > 0:
             return zero_il_opt
 
         return None
