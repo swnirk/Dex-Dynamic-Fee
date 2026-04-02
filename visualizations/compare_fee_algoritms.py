@@ -20,10 +20,26 @@ def extract_user_markouts(
     return res
 
 
+def extract_user_yield(
+    simulation_result: SimulationResult, user_type: UserType
+) -> list:
+    res = []
+    for snapshot in simulation_result.snapshots:
+        res.append(snapshot.user_states[user_type].yield_markout())
+    return res
+
+
 def extract_lp_markouts(simulation_result: SimulationResult) -> list:
     res = []
     for snapshot in simulation_result.snapshots:
         res.append(snapshot.lp_state.total_markout)
+    return res
+
+
+def extract_lp_yield(simulation_result: SimulationResult) -> list:
+    res = []
+    for snapshot in simulation_result.snapshots:
+        res.append(snapshot.lp_state.yield_markout())
     return res
 
 
@@ -56,6 +72,42 @@ def _plot_markouts_chart(
     plt.tight_layout()
 
     plt.show()
+
+
+def plot_participants_yield(
+    period_alias: str,
+    results: dict[str, ExperimentResult],
+):
+    """
+    results: dict[str, ExperimentResult]
+        keys -- experiment names
+        values -- ExperimentResult
+    """
+    timestamps = list(results.values())[0].simulation_result.timestamps
+
+    # We don't need to plot uninformed users yield charts as they are almost always trivial
+
+    _plot_markouts_chart(
+        markouts={
+            f"{experiment_name}": extract_user_yield(
+                experiment_result.simulation_result, UserType.INFORMED
+            )
+            for experiment_name, experiment_result in results.items()
+        },
+        timestamps=timestamps,
+        user_type_name="IU",
+        period_alias=period_alias,
+    )
+
+    _plot_markouts_chart(
+        markouts={
+            f"{experiment_name}": extract_lp_yield(experiment_result.simulation_result)
+            for experiment_name, experiment_result in results.items()
+        },
+        timestamps=timestamps,
+        user_type_name="LP",
+        period_alias=period_alias,
+    )
 
 
 def plot_participants_markouts(
@@ -194,6 +246,35 @@ def get_experiments_summary_by_description(
     return pd.DataFrame(summaries).round(2)
 
 
+def export_yields_to_csv(
+    period_alias: str,
+    results: dict[str, ExperimentResult],
+    output_dir: str = "csv_export",
+):
+    """
+    Export IU and LP yields to CSV.
+    One CSV per metric with columns: timestamp + one column per fee algorithm.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    timestamps = list(results.values())[0].simulation_result.timestamps
+
+    # IU yields
+    iu_data = {"timestamp": timestamps}
+    for name, er in results.items():
+        iu_data[name] = extract_user_yield(er.simulation_result, UserType.INFORMED)
+    pd.DataFrame(iu_data).to_csv(
+        os.path.join(output_dir, f"{period_alias}_iu_yields.csv"), index=False
+    )
+
+    # LP yields
+    lp_data = {"timestamp": timestamps}
+    for name, er in results.items():
+        lp_data[name] = extract_lp_yield(er.simulation_result)
+    pd.DataFrame(lp_data).to_csv(
+        os.path.join(output_dir, f"{period_alias}_lp_yields.csv"), index=False
+    )
+
+
 def export_markouts_to_csv(
     period_alias: str,
     results: dict[str, ExperimentResult],
@@ -251,11 +332,13 @@ def export_fee_history_to_csv(
     a_to_b_fees = [s.pool.fee_algorithm.a_to_b_exchange_fee_rate for s in snapshots]
     b_to_a_fees = [s.pool.fee_algorithm.b_to_a_exchange_fee_rate for s in snapshots]
 
-    pd.DataFrame({
-        "timestamp": timestamps,
-        "a_to_b_fee_rate": a_to_b_fees,
-        "b_to_a_fee_rate": b_to_a_fees,
-    }).to_csv(
+    pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "a_to_b_fee_rate": a_to_b_fees,
+            "b_to_a_fee_rate": b_to_a_fees,
+        }
+    ).to_csv(
         os.path.join(output_dir, f"{period_alias}_{fee_algo_name}_fee_history.csv"),
         index=False,
     )
@@ -271,12 +354,12 @@ def export_prices_to_csv(
     os.makedirs(output_dir, exist_ok=True)
     for period_alias, er in results.items():
         data = er.data
-        df = pd.DataFrame({
-            "time": data["time"] if "time" in data.columns else data.index,
-            "price_A": data["price_A"],
-            "price_B": data["price_B"],
-            "price_ratio_A_B": data["price_A"] / data["price_B"],
-        })
-        df.to_csv(
-            os.path.join(output_dir, f"{period_alias}_prices.csv"), index=False
+        df = pd.DataFrame(
+            {
+                "time": data["time"] if "time" in data.columns else data.index,
+                "price_A": data["price_A"],
+                "price_B": data["price_B"],
+                "price_ratio_A_B": data["price_A"] / data["price_B"],
+            }
         )
+        df.to_csv(os.path.join(output_dir, f"{period_alias}_prices.csv"), index=False)

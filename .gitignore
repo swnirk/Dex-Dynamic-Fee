@@ -1,4 +1,5 @@
 visualizations/data/
+visualizations/csv_export/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
