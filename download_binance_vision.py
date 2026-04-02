@@ -43,6 +43,15 @@ KLINES_COLUMNS = [
     "Ignore",
 ]
 
+
+def _parse_timestamp_col(series: pd.Series) -> pd.Series:
+    """Auto-detect ms vs us timestamps (Binance changed format over time)."""
+    sample = series.iloc[0]
+    # Timestamps > 1e15 are microseconds, <= 1e15 are milliseconds
+    unit = "us" if sample > 1e15 else "ms"
+    return pd.to_datetime(series, unit=unit, utc=True).dt.tz_convert(None)
+
+
 PANDAS_FREQ_MAP = {
     "s": "s",
     "min": "min",
@@ -122,8 +131,7 @@ def _download_day(symbol: str, date: datetime) -> pd.DataFrame:
         with zf.open(csv_name) as f:
             df = pd.read_csv(f, header=None, names=KLINES_COLUMNS)
 
-    df["Open time"] = pd.to_datetime(df["Open time"], unit="ms", utc=True)
-    df["Open time"] = df["Open time"].dt.tz_convert(None)  # remove tz
+    df["Open time"] = _parse_timestamp_col(df["Open time"])
     df["Open"] = df["Open"].astype(float)
     return df[["Open time", "Open"]]
 
@@ -246,7 +254,7 @@ def resample_pair(
 
     for zip_a in zips_a:
         # e.g. ETHUSDT-1s-2024-03.zip → SHIBUSDT-1s-2024-03.zip
-        month_suffix = zip_a.name[len(symbol_a):]  # "-1s-2024-03.zip"
+        month_suffix = zip_a.name[len(symbol_a) :]  # "-1s-2024-03.zip"
         zip_b = zip_dir / f"{symbol_b}{month_suffix}"
         if not zip_b.exists():
             print(f"  Skipping {zip_a.name}: no matching {zip_b.name}")
@@ -264,7 +272,7 @@ def resample_pair(
             with zipfile.ZipFile(path) as zf:
                 with zf.open(zf.namelist()[0]) as f:
                     df = pd.read_csv(f, header=None, names=KLINES_COLUMNS)
-            df["Open time"] = pd.to_datetime(df["Open time"], unit="ms", utc=True).dt.tz_convert(None)
+            df["Open time"] = _parse_timestamp_col(df["Open time"])
             df["Open"] = df["Open"].astype(float)
             return df[["Open time", "Open"]]
 
@@ -283,8 +291,12 @@ def resample_pair(
                 .reset_index()
             )
 
-        df_a = do_resample(df_a).rename(columns={"Open": "price_A", "Open time": "time"})
-        df_b = do_resample(df_b).rename(columns={"Open": "price_B", "Open time": "time"})
+        df_a = do_resample(df_a).rename(
+            columns={"Open": "price_A", "Open time": "time"}
+        )
+        df_b = do_resample(df_b).rename(
+            columns={"Open": "price_B", "Open time": "time"}
+        )
 
         merged = pd.merge(df_a, df_b, on="time")
         merged.to_csv(out_path, index=False)
@@ -297,33 +309,41 @@ def main():
 
     # --- download-zips: just fetch monthly zip files ---
     p_zips = subparsers.add_parser("download-zips", help="Download monthly zip files")
-    p_zips.add_argument("--symbols", required=True, nargs="+",
-                        help="Binance symbols, e.g. ETHUSDT SHIBUSDT")
+    p_zips.add_argument(
+        "--symbols",
+        required=True,
+        nargs="+",
+        help="Binance symbols, e.g. ETHUSDT SHIBUSDT",
+    )
     p_zips.add_argument("--start", required=True, help="e.g. '2024-03-01'")
-    p_zips.add_argument("--end",   required=True, help="e.g. '2024-04-30'")
+    p_zips.add_argument("--end", required=True, help="e.g. '2024-04-30'")
     p_zips.add_argument("--interval", default="1s")
     p_zips.add_argument("--out-dir", default="visualizations/data/zips")
 
     # --- resample: extract zips + resample + merge pair into CSV ---
-    p_res = subparsers.add_parser("resample", help="Resample downloaded zips into time,price_A,price_B CSVs")
+    p_res = subparsers.add_parser(
+        "resample", help="Resample downloaded zips into time,price_A,price_B CSVs"
+    )
     p_res.add_argument("--symbol-a", required=True, help="e.g. ETHUSDT")
     p_res.add_argument("--symbol-b", required=True, help="e.g. SHIBUSDT")
-    p_res.add_argument("--zip-dir",  default="visualizations/data/zips")
-    p_res.add_argument("--out-dir",  default="visualizations/data/new_data")
+    p_res.add_argument("--zip-dir", default="visualizations/data/zips")
+    p_res.add_argument("--out-dir", default="visualizations/data/new_data")
     p_res.add_argument("--interval", default="12s")
 
     # --- cache: full pipeline (download 1s + resample + merge) ---
-    p_cache = subparsers.add_parser("cache", help="Download, resample and save cache CSV")
+    p_cache = subparsers.add_parser(
+        "cache", help="Download, resample and save cache CSV"
+    )
     p_cache.add_argument("--start", required=True)
-    p_cache.add_argument("--end",   required=True)
+    p_cache.add_argument("--end", required=True)
     p_cache.add_argument("--a-symbol", default="ETH")
     p_cache.add_argument("--b-symbol", default="SHIB")
-    p_cache.add_argument("--stable",   default="USDT")
+    p_cache.add_argument("--stable", default="USDT")
     p_cache.add_argument("--interval", default="12s")
     p_cache.add_argument("--data-dir", default="visualizations/data")
 
     args = parser.parse_args()
-    fmt_long  = "%Y-%m-%d %H:%M:%S"
+    fmt_long = "%Y-%m-%d %H:%M:%S"
     fmt_short = "%Y-%m-%d"
 
     def _parse_dt(s):

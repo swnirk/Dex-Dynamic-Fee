@@ -61,7 +61,10 @@ class PiecewiseFee(TradeSizeAwareFeeAlgorithm):
 
         phi_1 = self._get_base_fee_rate(pool_state)
         phi_2 = self._get_base_inverse_fee_rate(pool_state)
+        gamma_1 = 1 - phi_1
+        gamma_2 = 1 - phi_2
         boundary = phi_1 + phi_2
+        boundary = (1 - gamma_1 * gamma_2) / gamma_1 / (2 * gamma_2 - 1)
 
         # Fixed fee optimal swap
         beta = 1 - phi_1
